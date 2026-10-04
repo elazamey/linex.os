@@ -1,1 +1,366 @@
-# linex.os
+# LINEX.OS
+
+> **Agent Operating System — Repository Foundation (P5)**
+
+LINEX.OS is being built as a disciplined, verifiable **Agent OS** — not a random collection of scripts. The project establishes a clear execution contract for AI agents (Arena) with fail-closed policy, structured privilege gate, and evidence-based verification before any product code.
+
+---
+
+## Purpose
+
+- Provide a **governed runtime** for AI agents that can execute Linux and PowerShell tasks safely
+- Separate **System privilege** (Linux sudoers, external) from **Project policy** (controlled by LINEX.OS Gate)
+- Establish **reproducible developer baseline** (build toolchain) without blind installations
+- Enable **cross-platform verification** (Linux + PowerShell 7) when network allows
+- Become a foundation for a larger **Agent OS** with Core, Runtime, Agent Layer, Tool Layer, Policy Layer, Memory, Filesystem, Networking, Observability
+
+**What LINEX.OS is NOT yet:**
+- Not production ready
+- Not fully complete
+- Not cross-platform verified (PowerShell blocked in Arena network)
+- Not an application framework (no React/Next/Python/Rust stack chosen yet)
+
+---
+
+## Current Status (P0-P5)
+
+| Milestone | Status | Evidence |
+|-----------|--------|----------|
+| **P0 Environment Discovery** | ✅ PASS | Debian 12 bookworm x86_64, apt-get, sudo NOPASSWD: ALL, Node 22, Python 3.11, Git 2.39.5 |
+| **P1 Bootstrap Foundation** | ✅ COMPLETE | `ops/bootstrap/bootstrap.sh`, `ops/verify/verify-environment.sh`, `scripts/doctor.sh` — read-only, fail-closed, no install |
+| **P2 Privilege Policy / Gate** | ✅ COMPLETE | `ops/security/privilege-gate.sh` — allowlist + structured actions + dry-run default, 28 tests PASS |
+| **P3 Linux Toolchain** | ✅ COMPLETE | gcc 12.2.0, g++ 12.2.0, make 4.3, pkg-config 3.0.0 (built from GitHub pkgconf), python3, node, npm — 44 tests PASS |
+| **P4 PowerShell 7** | ⛔ BLOCKED — Arena Network | `packages.microsoft.com` BLOCKED (SSL_ERROR_SYSCALL), `release-assets.githubusercontent.com` BLOCKED, `github.com` PASS, `api.github.com` PASS — Gate and install logic PASS (18 tests), but binary download blocked, no third-party used |
+| **P5 Repository Foundation** | ▶ IN PROGRESS (this phase) | docs/, config/, tests/, .github/workflows/ci.yml, README, CONTRIBUTING, SECURITY, LICENSE |
+
+**P4 Blocker Details:**
+- Microsoft Repository: `https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb` → BLOCKED (Arena sandbox blocks packages.microsoft.com:443)
+- GitHub Official Release: `https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/powershell_7.6.6-1.deb_amd64.deb` → redirects to `release-assets.githubusercontent.com` → BLOCKED (same)
+- `github.com` and `api.github.com` → PASS via E2B proxy, so detection and policy work, but binary assets are on blocked domain
+- Official LTS version per Microsoft Learn: **PowerShell 7.6.6 LTS**, Debian 12 supported until **2028-06-30**
+- No workaround with third-party, snap, or unofficial mirror — documented as known blocker
+
+---
+
+## Architecture Status
+
+**Logical Layers (no framework chosen yet):**
+
+```
+UI
+ ↓
+API
+ ↓
+Runtime
+ ↓
+Policy Layer (privilege-policy.md)
+ ↓
+Privilege Layer (privilege-gate.sh)
+ ↓
+Execution (structured actions)
+```
+
+- **Core**: OS detection, arch detection, package manager detection (extensible)
+- **Runtime**: Bootstrap + verification (P1)
+- **Agent Layer**: Future — agent contracts (P6 AGENTS.md, ARENA.md)
+- **Tool Layer**: Linux toolchain (P3), PowerShell (P4 blocked)
+- **Policy Layer**: Allowlist, fail-closed, 5 levels: READ_ONLY, SAFE_USER_COMMAND, PACKAGE_INSTALL, PRIVILEGED_OPERATION, DESTRUCTIVE_OPERATION
+- **Privilege Layer**: Gate with dry-run default, --execute explicit, no arbitrary sudo
+- **Memory, Filesystem, Networking**: Future layers, dependency direction enforced
+- **UI/API**: Future, must not directly call sudo
+- **Observability**: Evidence logs with ACTION, CLASS, POLICY, DECISION, EXECUTION, EXIT_CODE, TIMESTAMP — no secrets
+- **Verification**: doctor.sh aggregates checks, verify-environment.sh detailed
+
+**Dependency Rule:** UI → API → Runtime → Policy → Execution. Never UI → sudo or Agent → arbitrary shell.
+
+---
+
+## Environment
+
+**Current Arena Sandbox (P0-P3 verified):**
+
+```
+OS: Debian GNU/Linux 12 (bookworm)
+VERSION_ID: 12
+ARCH: x86_64
+KERNEL: Linux 6.1.158+ x86_64
+USER: user (uid 1001, groups sudo)
+SUDO: AVAILABLE_NOPASSWD - (ALL : ALL) ALL, NOPASSWD: ALL - EXTERNAL / NOT CONTROLLED
+PACKAGE_MANAGER: apt-get
+BASH: GNU bash 5.2.15
+GIT: 2.39.5
+CURL: 7.88.1
+JQ: 1.6
+PYTHON: 3.11.2
+NODE: v22.22.3
+NPM: 10.9.8
+GCC: 12.2.0 (Debian 12.2.0-14+deb12u1)
+G++: 12.2.0
+MAKE: 4.3
+PKG-CONFIG: 3.0.0 (pkgconf built from GitHub due to apt network block)
+DOCKER: NOT INSTALLED (not required for P3)
+PWSH: NOT VERIFIED / BLOCKED (P4 network restriction)
+DISK: 21G total, 20G avail (4%)
+MEMORY: 3.8Gi total, 3.6Gi available
+NETWORK: github.com PASS, api.github.com PASS, deb.debian.org BLOCKED, packages.microsoft.com BLOCKED, release-assets.githubusercontent.com BLOCKED
+```
+
+**Extensibility:** Detection logic in `ops/bootstrap/bootstrap.sh` supports debian, ubuntu, rhel, fedora, arch, alpine, darwin, windows via /etc/os-release and uname, not hardcoded to Debian.
+
+---
+
+## Security Model
+
+**Two distinct policies:**
+
+```
+SYSTEM_SUDO_POLICY: EXTERNAL / NOT CONTROLLED BY REPOSITORY
+  - Current: sudo NOPASSWD: ALL
+  - Evidence: sudo -n true PASS, sudo -l shows (ALL : ALL) ALL
+  - System can do sudo <arbitrary> outside Gate → YES (expected)
+
+LINEX_OS_PROJECT_POLICY: CONTROLLED BY PROJECT GATE
+  - Controlled by ops/security/privilege-gate.sh
+  - Allowlist + structured actions + fail-closed + dry-run default
+  - Project via Gate allows sudo <arbitrary> → NO (BLOCKED unless explicitly allowed action + allowlist)
+  - Evidence: ./privilege-gate.sh "sudo whoami" → BLOCKED EXIT 3, ./privilege-gate.sh "rm -rf /" → BLOCKED
+```
+
+**Levels:**
+- READ_ONLY: allowed without sudo (e.g., check-package-manager)
+- SAFE_USER_COMMAND: allowed if explicitly safe (e.g., service-status ssh read-only)
+- PACKAGE_INSTALL: DENY by default, requires Gate + allowlist + --execute
+- PRIVILEGED_OPERATION: DENY by default, requires explicit action (e.g., register-microsoft-repository)
+- DESTRUCTIVE_OPERATION: DENY always in P2/P3/P4 (rm -rf /, mkfs, dd, shutdown, etc.)
+
+**Gate Principles:**
+- Default DRY-RUN: shows ACTION, CLASS, POLICY, WOULD EXECUTE, but NOT EXECUTED
+- Real execution requires explicit `--execute` flag
+- No `sudo bash`, `sudo sh`, `sudo env`, `sudo -i`, `sudo su`, `sudo $USER_INPUT`
+- No `eval`, no `bash -c "$INPUT"` with uncontrolled input
+- No `curl | bash`, `curl | sh`, `wget | bash`, `wget | sh`
+- Package name validation: regex `^[a-z0-9][a-z0-9+._-]{0,63}$`, no metacharacters `; & | $ ` \ " ' < > ( ) { } * ? ! ~ #`, no path traversal `/` or `..`, no leading `-`
+- Allowlist: DEFAULT DENY, explicit list (P2: ca-certificates, curl, git, etc.; P3: +gcc, g++, make, pkg-config, build-essential; P4: +powershell, packages-microsoft-prod)
+- Fail-closed: unknown action/package/invalid args/missing policy → BLOCKED non-zero exit
+- Evidence: structured without secrets (no passwords, tokens, API keys)
+
+**Important:** Gate is governance layer, NOT kernel-level sandbox. Real isolation needs container/user isolation later.
+
+---
+
+## Agent Execution Model
+
+**Workflow (mandatory for Arena):**
+
+```
+INSPECT → PLAN → CHANGE → TEST → VERIFY → REPORT
+```
+
+1. **INSPECT**: Read-only discovery (whoami, id, uname -a, /etc/os-release, command -v checks, sudo -n true, network checks)
+2. **PLAN**: Propose minimal changes, no blind installation, no assumption of Ubuntu/Debian before detection
+3. **CHANGE**: Create files only in allowed paths (ops/, docs/, config/, tests/, scripts/, .github/), no /etc/sudoers modification, no secrets
+4. **TEST**: bash -n for all scripts, shellcheck if available (SKIPPED if not), run P2/P3/P4 tests, no real package install in tests (dry-run)
+5. **VERIFY**: Run verify-environment.sh, doctor.sh, policy-check.sh, toolchain tests, evidence with VERIFIED/NOT VERIFIED/BLOCKED/PASS
+6. **REPORT**: Output STATUS, RESULT, EVIDENCE, CHANGED FILES, TESTS, BLOCKERS, NEXT — no claim PASS without evidence
+
+**Agent Contract (P6 will formalize in AGENTS.md, ARENA.md):**
+
+- No blind installation
+- No destructive commands
+- No secrets in repository
+- No production claims from local tests (Local PASS ≠ Production PASS)
+- No deploy without explicit authorization
+- No dependency addition without justification
+- Every major change requires verification
+- No third-party source for PowerShell (only packages.microsoft.com and github.com/PowerShell/PowerShell)
+
+---
+
+## Development Workflow
+
+**Phase Order (enforced):**
+
+```
+P0 Environment Discovery → PASS
+  ↓
+P1 Bootstrap + verification → COMPLETE (read-only, no install)
+  ↓
+P2 Privilege Policy / Gate → COMPLETE (must precede any sudo install, because sudo NOPASSWD: ALL)
+  ↓
+P3 Linux Toolchain → COMPLETE (detect missing, Gate dry-run, Gate --execute only approved)
+  ↓
+P4 PowerShell → BLOCKED (Arena network: packages.microsoft.com and release-assets.githubusercontent.com blocked, github.com PASS, no third-party)
+  ↓
+P5 Repository Foundation → IN PROGRESS (this phase)
+  ↓
+P6 Agent Contract (AGENTS.md, ARENA.md) → NEXT after P5
+  ↓
+P7 Doctor + CI + complete verify
+  ↓
+P8 Architecture
+  ↓
+P9+ Product Code
+```
+
+**Why this order?** Because `sudo NOPASSWD: ALL` means system does not enforce fine-grained limits on Arena. So `privilege-gate.sh` must be built as project control layer BEFORE any script that uses sudo. This prevents `install-pwsh.sh` from becoming first channel of root execution without restrictions.
+
+**Current Branch:** `arena/01a107fc-linex-os` (not yet on GitHub, only `main` at 768bf39 exists on remote, per decision no auto commit/push)
+
+**Git Hygiene:** No auto commit/push/merge/deployment. Show `git status --short` and changed files only.
+
+---
+
+## Verification Model
+
+**Single command to get project status:**
+
+```bash
+./scripts/doctor.sh
+# and
+./ops/linux/doctor.sh
+./ops/security/policy-check.sh
+./ops/security/tests/privilege-policy.test.sh
+./ops/linux/tests/toolchain.test.sh
+./ops/powershell/tests/powershell-install.test.sh
+```
+
+**Output example (P5):**
+
+```
+Repository       → PASS
+Git              → PASS
+Linux shell      → PASS
+sudo             → PASS (AVAILABLE_NOPASSWD - requires P2 policy)
+PowerShell       → NOT VERIFIED / BLOCKED (P4 network restriction, expected)
+Package manager  → PASS (apt-get)
+Network          → PASS (github.com), BLOCKED (deb.debian.org, packages.microsoft.com, release-assets)
+Required tools   → PASS
+Disk             → PASS (20G avail)
+Memory           → PASS (3.6Gi available)
+Security policy  → PASS
+Tests            → PASS (P2 28/28, P3 44/44, P4 18/18 logic PASS, install BLOCKED)
+
+STATUS → PASS (with PowerShell BLOCKED known)
+```
+
+**No claim PASS without evidence:** Every PASS must have captured command output, version check, or test log.
+
+---
+
+## Known Blockers
+
+| Component | Status | Reason | Evidence | Next |
+|-----------|--------|--------|----------|------|
+| PowerShell 7.6.6 LTS | BLOCKED / NOT VERIFIED | Arena sandbox network blocks packages.microsoft.com:443 and release-assets.githubusercontent.com:443 (where GitHub release binaries hosted) with SSL_ERROR_SYSCALL, while github.com and api.github.com PASS via E2B proxy | curl -v https://packages.microsoft.com → SSL_ERROR_SYSCALL, curl -v https://release-assets.githubusercontent.com → SSL_ERROR_SYSCALL, curl -Is https://github.com → 200 PASS, gh release download → EOF | Requires network allowlist for packages.microsoft.com and release-assets.githubusercontent.com or manual .deb provision into /tmp/linex-os-powershell/ per official Microsoft Learn (Debian 12 supported until 2028-06-30) |
+| Debian apt mirrors | BLOCKED | deb.debian.org Empty reply, all Fastly and non-Fastly Debian mirrors blocked in Arena sandbox | curl -v http://deb.debian.org/debian/dists/bookworm/InRelease → Empty reply, /var/lib/apt/lists empty (3 files only) | P3 workaround via GitHub source build for pkg-config succeeded (pkgconf 3.0.0), but apt packages still blocked |
+| Docker/Podman | NOT INSTALLED / NOT REQUIRED | Not needed for P0-P5, will be considered only if architecture proves need | command -v docker → MISSING (expected) | P? later if needed |
+| Branch on GitHub | NOT YET PUSHED | Decision no auto commit/push in P1-P5, so arena/01a107fc-linex-os not on remote, only main at 768bf39 exists | git branch -a shows arena branch local only, remotes/origin/main only | Will be pushed when foundation is reviewed |
+
+**What is NOT a blocker:**
+- gcc, g++, make, build-essential → VERIFIED (already installed via dpkg in base image, 12.2.0, 4.3, 12.9)
+- pkg-config → VERIFIED via workaround (3.0.0 built from GitHub pkgconf/pkgconf)
+- All P1/P2/P3 tests → PASS
+
+---
+
+## Project Structure (P5)
+
+```
+linex.os/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # Static validation only, no Docker/PowerShell assumed
+├── docs/
+│   ├── vision.md               # What is LINEX.OS, problem, long-term goal, principles
+│   ├── architecture.md         # Logical layers, dependency direction, no framework
+│   ├── security.md             # Project vs System policy, allowlist, fail-closed
+│   ├── development.md          # INSPECT→PLAN→CHANGE→TEST→VERIFY→REPORT workflow
+│   └── operations.md           # bootstrap, doctor, verification, toolchain, Gate, network limits, P4 blocker table
+├── ops/
+│   ├── bootstrap/
+│   │   ├── bootstrap.sh        # P1 - strict mode, OS/arch/pkg manager detection, no install
+│   │   └── bootstrap.ps1       # P1 - PowerShell 7 compatible
+│   ├── linux/
+│   │   ├── install-base.sh     # P3 - DETECT→VERIFY→PLAN→DRY-RUN→GATE→INSTALL only approved
+│   │   ├── doctor.sh           # P3 - verifies toolchain
+│   │   ├── toolchain-manifest.txt # Tool|Command|Package|Required|Status|Version|Notes
+│   │   └── tests/
+│   │       └── toolchain.test.sh # 44 tests
+│   ├── powershell/
+│   │   ├── install-pwsh.sh     # P4 - dual path: Microsoft repo primary, GitHub .deb fallback, official only
+│   │   ├── doctor.ps1          # P4 - verifies pwsh, version, edition, OS, arch
+│   │   └── tests/
+│   │       └── powershell-install.test.sh # 18 tests
+│   ├── security/
+│   │   ├── privilege-policy.md # P2 - 5 levels, allowlist, fail-closed, sudo distinction
+│   │   ├── forbidden-commands.txt # Defense-in-depth blacklist
+│   │   ├── privilege-gate.sh   # P2/P3/P4 - allowlist + structured actions + dry-run default
+│   │   ├── policy-check.sh     # P2 - verifies policy files, no dangerous constructions
+│   │   └── tests/
+│   │       └── privilege-policy.test.sh # 28 tests
+│   └── verify/
+│       ├── verify-environment.sh  # P1 - comprehensive verification
+│       └── verify-environment.ps1 # P1 - PowerShell verification
+├── config/
+│   └── README.md               # Non-sensitive config only, no secrets
+├── tests/
+│   └── README.md               # Test levels, Local PASS ≠ Production PASS
+├── scripts/
+│   ├── doctor.sh               # P1 aggregator - Repository, Git, Linux shell, sudo, PowerShell, etc.
+│   └── doctor.ps1              # P1 aggregator PowerShell
+├── README.md                   # This file
+├── CONTRIBUTING.md             # Contribution rules
+├── SECURITY.md                 # Security reporting, secret handling
+├── LICENSE                     # PENDING OWNER DECISION (placeholder)
+└── .gitignore                  # Excludes .env, secrets, logs, build artifacts, OS junk
+```
+
+**After P5, next is P6:** `AGENTS.md` and `ARENA.md` — the agent contract that tells Arena exactly when to inspect, propose, request permission, and stop. This is what makes the repository suitable for a large project driven by Agent.
+
+---
+
+## Quick Start (P5)
+
+```bash
+# 1. Bootstrap detection (read-only, no install)
+./ops/bootstrap/bootstrap.sh
+
+# 2. Verify environment
+./ops/verify/verify-environment.sh
+
+# 3. Doctor (aggregator)
+./scripts/doctor.sh
+./ops/linux/doctor.sh
+
+# 4. Policy check
+./ops/security/policy-check.sh
+
+# 5. Run tests (all should PASS, P4 install BLOCKED but logic PASS)
+./ops/security/tests/privilege-policy.test.sh
+./ops/linux/tests/toolchain.test.sh
+./ops/powershell/tests/powershell-install.test.sh
+
+# 6. Try PowerShell install (will be BLOCKED in Arena due to network, but logic PASS)
+./ops/powershell/install-pwsh.sh
+```
+
+**Expected in Arena:**
+- P1, P2, P3 → PASS
+- P4 → BLOCKED (network) with evidence, no third-party
+- P5 → Foundation implemented, docs, CI static validation
+
+---
+
+## References
+
+- Arena Agent Mode: https://help.arena.ai/articles/5432423882-how-to-use-agent-mode
+- Microsoft PowerShell on Debian: https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian
+- PowerShell 7.6.6 LTS Release: https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6
+- Debian 12 bookworm supported until 2028-06-30 per Microsoft Learn
+- GitHub Actions GITHUB_TOKEN least privilege: https://docs.github.com/en/actions/tutorials/authenticate-with-github_token
+
+---
+
+**Status:** P5 Repository Foundation — IMPLEMENTED (this phase), VERIFIED via tests, with P4 BLOCKED as known network restriction, no third-party workaround.
+
+**Next:** P6 Agent Contract (AGENTS.md, ARENA.md) — the critical phase that defines when Arena inspects, proposes, requests permission, and stops.

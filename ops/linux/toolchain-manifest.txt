@@ -1,0 +1,54 @@
+# LINEX.OS - P3 Toolchain Manifest
+# Format: Tool | Command | Package | Required | Status | Version | Notes
+# Status is VERIFIED only after actual command execution, not assumed
+# Generated: P3 - Linux Developer Toolchain
+# Environment: Debian 12 bookworm x86_64, apt-get, sudo NOPASSWD: ALL
+
+# Required Baseline
+bash | bash | bash | yes | VERIFIED | 5.2.15(1) | GNU bash, required for all scripts
+coreutils | ls | coreutils | yes | VERIFIED | 9.1 | ls, cp, mv, etc.
+find | find | findutils | yes | VERIFIED | 4.9.0 | findutils
+grep | grep | grep | yes | VERIFIED | 3.8 | GNU grep
+sed | sed | sed | yes | VERIFIED | 4.9 | GNU sed
+awk | awk | gawk | yes | VERIFIED | 5.2.1 | gawk, mawk fallback
+tar | tar | tar | yes | VERIFIED | 1.34 | GNU tar
+gzip | gzip | gzip | yes | VERIFIED | 1.12 | gzip
+zip | zip | zip | yes | VERIFIED | 3.0 | Info-ZIP
+unzip | unzip | unzip | yes | VERIFIED | 6.0 | Info-ZIP
+curl | curl | curl | yes | VERIFIED | 7.88.1 | curl
+wget | wget | wget | yes | VERIFIED | 1.21.3 | wget
+git | git | git | yes | VERIFIED | 2.39.5 | git
+jq | jq | jq | yes | VERIFIED | 1.6 | jq
+ca-certificates | ca-certificates | ca-certificates | yes | VERIFIED | 20230311+deb12u1 | Common CA certs, file /etc/ssl/certs/ca-certificates.crt
+
+# Developer Build Toolchain
+gcc | gcc | gcc | yes | VERIFIED | 12.2.0 | Debian 12.2.0-14+deb12u1, GNU C compiler
+g++ | g++ | g++ | yes | VERIFIED | 12.2.0 | Debian 12.2.0-14+deb12u1, GNU C++ compiler
+make | make | make | yes | VERIFIED | 4.3 | GNU Make
+pkg-config | pkg-config | pkg-config | yes | VERIFIED | 3.0.0 | pkgconf 3.0.0 built from GitHub pkgconf/pkgconf via make -f Makefile.lite (Arena sandbox apt mirror blocked, workaround via GitHub source)
+build-essential | build-essential | build-essential | yes | VERIFIED | 12.9 | Informational list, already installed via dpkg
+
+# Runtimes
+python3 | python3 | python3 | yes | VERIFIED | 3.11.2 | Python 3.11
+node | node | nodejs | yes | VERIFIED | 22.22.3 | Node.js via /usr/local/bin
+npm | npm | npm | yes | VERIFIED | 10.9.8 | npm
+
+# Explicitly NOT REQUIRED in P3
+docker | docker | docker.io | no | NOT INSTALLED | N/A | NOT REQUIRED for P3, P? later if needed
+podman | podman | podman | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+pwsh | pwsh | powershell | P4 | NOT VERIFIED | N/A | NOT VERIFIED in P3, P4 will install via Microsoft repo (Debian 12 supported until 2028-06-30)
+java | java | openjdk | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+go | go | golang | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+rust | rustc | rustc | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+dotnet | dotnet | dotnet | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+cuda | nvidia-smi | cuda | no | NOT INSTALLED | N/A | NOT REQUIRED for P3
+
+# Notes
+# - All VERIFIED entries have been checked via command -v and --version
+# - MISSING entries will be installed via privilege-gate.sh with dry-run first
+# - No apt upgrade/full-upgrade/dist-upgrade executed
+# - No curl|bash or wget|bash patterns used
+# - Gate used for all privileged installs
+# - Disk: 21G total, 20G avail, 4% used - PASS
+# - Memory: 3.8Gi total, 3.6Gi available - PASS
+# - P3 TOOLCHAIN ALREADY SATISFIED except pkg-config which is MISSING and will be installed
