@@ -1,0 +1,169 @@
+# LINEX.OS - Forbidden Commands (P2)
+# This file is defense-in-depth. Primary control is ALLOWLIST + structured actions + fail-closed.
+# Any command matching these patterns must be BLOCKED, but absence from this list does NOT mean ALLOW.
+# Default is DENY for unknown.
+
+# Destructive filesystem
+rm -rf /
+rm -rf /*
+rm -rf / --no-preserve-root
+mkfs
+mkfs.*
+mkfs.ext4
+mkfs.xfs
+mkfs.btrfs
+fdisk
+parted
+wipefs
+dd
+dd if=
+shred
+
+# System power
+shutdown
+reboot
+poweroff
+halt
+init
+init 0
+init 6
+systemctl poweroff
+systemctl reboot
+systemctl halt
+
+# Firewall destructive
+iptables -F
+iptables --flush
+iptables -X
+iptables --delete-chain
+nft flush ruleset
+nft flush
+ufw --force reset
+
+# User/group destructive
+userdel
+groupdel
+useradd
+usermod
+groupadd
+groupmod
+passwd
+
+# Sudoers / auth modification
+visudo
+/etc/sudoers
+/etc/sudoers.d
+/etc/passwd
+/etc/shadow
+/etc/group
+chmod 777 /etc
+chown -R
+
+# Privilege escalation wrappers (forbidden as arbitrary execution)
+sudo bash
+sudo sh
+sudo env
+sudo -i
+sudo su
+sudo -s
+sudo -u root bash
+sudo -u root sh
+
+# Shell escape patterns (forbidden tokens in package/service names)
+# These are not commands but tokens that must be rejected in arguments
+# ;
+# &&
+# ||
+# |
+# $
+# $()
+# ``
+# >
+# <
+# >>
+# <<
+# `
+# \
+# "
+# '
+# ( )
+# { }
+# *
+# ?
+# !
+# ~
+# #
+# % (except allowed in some contexts, but denied in package names for P2)
+# &
+# path traversal
+../
+/etc/
+/
+./
+
+# Curl piped to shell (forbidden execution pattern)
+curl | sh
+curl | bash
+wget | sh
+wget | bash
+curl | sudo bash
+wget | sudo bash
+curl | sudo sh
+wget | sudo sh
+
+# Eval and shell -c with uncontrolled input (forbidden construction)
+eval
+bash -c
+sh -c
+zsh -c
+fish -c
+
+# Dangerous mounts and system
+mount
+umount
+mount -o
+systemctl enable
+systemctl disable
+systemctl start
+systemctl stop
+systemctl restart
+systemctl daemon-reload
+
+# Network destructive
+ifconfig
+ip link set
+ip addr flush
+iptables
+nft
+
+# Kernel / modules
+modprobe
+rmmod
+insmod
+sysctl -w
+
+# Package manager dangerous (only allow via Gate with allowlist, not arbitrary)
+apt-get upgrade
+apt upgrade
+apt-get dist-upgrade
+apt autoremove
+apt-get autoremove
+dnf upgrade
+yum upgrade
+pacman -Syu
+
+# Container escape / privileged
+docker run --privileged
+podman run --privileged
+docker --privileged
+podman --privileged
+
+# Secrets exfiltration patterns (should never be logged)
+# password=
+# token=
+# api_key=
+# secret=
+# credential
+
+# Note: This list is not exhaustive. Primary enforcement is allowlist.
+# Any unknown action/package is BLOCKED by default (fail-closed).

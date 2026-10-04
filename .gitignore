@@ -1,0 +1,163 @@
+# LINEX.OS - .gitignore (P5 Foundation)
+# Excludes sensitive, temporary, build artifacts, OS junk, but not source code
+
+# Secrets and credentials
+.env
+.env.*
+*.env
+secrets
+credentials
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+*secret*.txt
+*credential*.json
+*credential*.yaml
+*credential*.yml
+.aws/
+.azure/
+
+# Logs
+logs/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/tmp/linex-os-*.log
+/tmp/linex-os-powershell/
+linex-os-*.log
+
+# Build artifacts
+build/
+dist/
+out/
+target/
+bin/
+obj/
+*.o
+*.so
+*.a
+*.exe
+*.dll
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+# But keep source .zip/.tar.gz if explicitly needed? No, exclude by default
+# Allowlist for specific artifacts can be added with ! pattern if needed
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.backup
+*.old
+
+# OS junk
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE and editors
+.vscode/
+.idea/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+.pnp/
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PowerShell
+# Exclude downloaded .deb and compiled artifacts (per repository rules)
+*.deb
+/tmp/
+# But keep scripts
+
+# Arena and sandbox
+.arena/
+.cache/
+.local/
+.mypy_cache/
+.next/
+.nox/
+.npm/
+.nuxt/
+.output/
+.parcel-cache/
+.pytest_cache/
+.ruff_cache/
+.svelte-kit/
+.tox/
+.turbo/
+.venv/
+.vite/
+__pycache__/
+build/
+coverage/
+dist/
+node_modules/
+out/
+target/
+
+# Sensitive credential paths (also excluded from snapshots)
+.git/config
+.git/credentials
+.git-credentials
+.netrc
+
+# Keep important files
+!README.md
+!LICENSE
+!CONTRIBUTING.md
+!SECURITY.md
+!docs/**/*.md
+!config/**/*.md
+!ops/**/*.sh
+!ops/**/*.ps1
+!ops/**/*.txt
+!ops/**/*.md
+!scripts/**/*.sh
+!scripts/**/*.ps1
+!.github/**/*.yml
+!tests/**/*.md
+
+# Note: Do not use * to exclude all source code
+# Do not exclude source code with blanket patterns
