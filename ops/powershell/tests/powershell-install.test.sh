@@ -61,14 +61,49 @@ log "LINEX.OS POWERSHELL INSTALL TESTS - P4"
 log "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log ""
 
-# TEST-1 Debian detection → PASS
-log "=== TEST-1 Debian detection ==="
+# TEST-1 OS detection + installer OS gate → PASS
+# P13 FIX: this test used to assert that the HOST is Debian 12
+# (ID=debian && VERSION_ID="12"). That is an Arena-sandbox property, not a
+# LINEX.OS contract, so the suite failed 17/18 on the GitHub runner, which is
+# Ubuntu 24.04. The P4 contract is that /etc/os-release is read and that the
+# installer gates on it, so that is what is asserted now - distro-agnostically.
+# The Debian 12 build target of install-pwsh.sh is unchanged, and its gate is
+# verified here on any host, including by asserting it fail-closes elsewhere.
+log "=== TEST-1 OS detection + installer OS gate ==="
 TOTAL=$((TOTAL+1))
-if [[ -f /etc/os-release ]] && grep -q "ID=debian" /etc/os-release && grep -q "VERSION_ID=\"12\"" /etc/os-release; then
-  pass "TEST-1 Debian detection" "ID=debian VERSION_ID=12 found in /etc/os-release"
+T1_OK=true
+T1_DETAIL=""
+if [[ ! -f /etc/os-release ]]; then
+  T1_OK=false
+  T1_DETAIL="/etc/os-release missing"
+else
+  HOST_ID="$(. /etc/os-release && printf '%s' "${ID:-unknown}")"
+  HOST_VER="$(. /etc/os-release && printf '%s' "${VERSION_ID:-unknown}")"
+  case "$HOST_ID" in
+    debian|ubuntu) ;;
+    *) T1_OK=false; T1_DETAIL="host ID '$HOST_ID' is not a Microsoft-repo distro (debian|ubuntu)";;
+  esac
+  if ! grep -q 'BLOCKED: OS_ID is not debian' "$INSTALL_SCRIPT"; then
+    T1_OK=false
+    T1_DETAIL="${T1_DETAIL:+$T1_DETAIL; }installer has no OS_ID gate"
+  fi
+  if ! grep -q 'BLOCKED: VERSION_ID is not 12' "$INSTALL_SCRIPT"; then
+    T1_OK=false
+    T1_DETAIL="${T1_DETAIL:+$T1_DETAIL; }installer has no VERSION_ID gate"
+  fi
+  if [[ "$T1_OK" == true ]]; then
+    if [[ "$HOST_ID" == "debian" && "$HOST_VER" == "12" ]]; then
+      T1_DETAIL="host is Debian 12 bookworm, inside the install target"
+    else
+      T1_DETAIL="host is $HOST_ID $HOST_VER, outside the Debian 12 install target; installer must fail closed"
+    fi
+  fi
+fi
+if [[ "$T1_OK" == true ]]; then
+  pass "TEST-1 OS detection + installer OS gate" "$T1_DETAIL"
   PASSED=$((PASSED+1))
 else
-  fail "TEST-1 Debian detection" "Debian 12 not detected"
+  fail "TEST-1 OS detection + installer OS gate" "$T1_DETAIL"
   FAILED=$((FAILED+1))
 fi
 

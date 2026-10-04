@@ -1,0 +1,100 @@
+# LINEX.OS - CI Debug Runner (P13)
+#
+# WHY THIS EXISTS
+# The Arena sandbox cannot download GitHub Actions job logs: the log archive is
+# served from *.blob.core.windows.net, and that host is blocked in Arena
+# (SSL_ERROR_SYSCALL, verified). `gh run view --log-failed` and
+# `gh api .../actions/jobs/<id>/logs` both return an empty body here, so a red
+# job on the remote runner is otherwise undiagnosable from this environment.
+#
+# This workflow surfaces runner-side evidence through the channels Arena *can*
+# read: the step conclusion, the check-run annotations ("Process completed with
+# exit code N"), and - most usefully - a file the run itself echoes back.
+#
+# SECURITY
+#   - trigger: workflow_dispatch ONLY. No push, no pull_request, no
+#     pull_request_target, no workflow_run, no schedule. It can only be started
+#     by an authenticated actor with write access to the repository, so it never
+#     executes code from an untrusted pull request.
+#   - permissions: contents: read (least privilege, same as ci.yml)
+#   - no secrets are read, printed, or uploaded
+#   - the working directory is a clean checkout of the selected ref
+name: CI Debug
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Script to run from the repository root (e.g. ops/powershell/tests/powershell-install.test.sh)"
+        required: true
+        default: "ops/powershell/tests/powershell-install.test.sh"
+      trace:
+        description: "Run under bash -x and echo the last 200 trace lines back (true/false)"
+        required: false
+        default: "true"
+      extra_args:
+        description: "Extra arguments passed to the target script"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  debug:
+    name: "Debug: run one script with evidence"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (pinned to v7.0.1 SHA)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Runner facts (read-only)
+        run: |
+          set -eo pipefail
+          echo "runner os: $(. /etc/os-release && echo "$PRETTY_NAME")"
+          echo "pwsh: $(command -v pwsh || echo 'NOT FOUND')"
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh --version: $(pwsh --version 2>&1)"
+            echo "pwsh -Command smoke: $(pwsh -NoLogo -NoProfile -Command '"LINEX.OS POWERSHELL SMOKE PASS"' 2>&1)"
+          fi
+          echo "target from input: ${{ inputs.target }}"
+
+      - name: Run target script with trace
+        run: |
+          set -eo pipefail
+          TARGET="${{ inputs.target }}"
+          EXTRA="${{ inputs.extra_args }}"
+          TRACE="${{ inputs.trace }}"
+          if [ ! -f "$TARGET" ]; then
+            echo "FAIL: target '$TARGET' not found in checkout"
+            exit 1
+          fi
+          chmod +x "$TARGET"
+          # Make sure the P3 baseline is present so the trace is not polluted by
+          # an unrelated missing tool (same reasoning as ci.yml Job 4).
+          for t in pkg-config zip unzip; do
+            command -v "$t" >/dev/null 2>&1 || sudo apt-get install -y --no-install-recommends "$t" >/dev/null
+          done
+          # shellcheck disable=SC2086
+          if [ "$TRACE" = "true" ]; then
+            set +e
+            bash -x "$TARGET" $EXTRA > /tmp/debug-trace.txt 2>&1
+            RC=$?
+            set -e
+            echo "=== exit code: $RC ==="
+            echo "=== last 200 trace lines ==="
+            tail -200 /tmp/debug-trace.txt
+            exit "$RC"
+          else
+            set +e
+            bash "$TARGET" $EXTRA > /tmp/debug-out.txt 2>&1
+            RC=$?
+            set -e
+            echo "=== exit code: $RC ==="
+            cat /tmp/debug-out.txt
+            exit "$RC"
+          fi

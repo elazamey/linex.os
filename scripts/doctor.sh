@@ -275,18 +275,44 @@ section "LINEX.OS FOUNDATION DOCTOR - FINAL REPORT"
 echo ""
 echo "LINEX.OS FOUNDATION DOCTOR"
 echo ""
-echo "P1 Environment          $(if "$ROOT_DIR/ops/bootstrap/bootstrap.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "P2 Privilege            $(if "$ROOT_DIR/ops/security/tests/privilege-policy.test.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "P3 Toolchain            $(if "$ROOT_DIR/ops/linux/tests/toolchain.test.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
+# P13 FIX: the final report used to re-run every suite inside $(...) command
+# substitutions embedded in echo argument lists. Bash expands the command
+# substitutions of a single command concurrently, so one report could spawn ~17
+# nested test suites at once on a 2-vCPU runner, and the rows became
+# nondeterministic under load - observed as "Tests FAIL" in a run whose
+# essential checks all passed and whose exit code was 0.
+# Each suite now runs exactly once, sequentially, into a cached result reused by
+# both the report rows and the ESSENTIAL_FAIL evaluation below. This also makes
+# the report agree with the foundation status by construction.
+verdict_of() {
+  # verdict_of <cmd...> -> PASS on zero exit, FAIL otherwise
+  if "$@" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi
+}
+
+R_P1=$(verdict_of "$ROOT_DIR/ops/bootstrap/bootstrap.sh")
+R_P2=$(verdict_of "$ROOT_DIR/ops/security/tests/privilege-policy.test.sh")
+R_P3=$(verdict_of "$ROOT_DIR/ops/linux/tests/toolchain.test.sh")
+R_P6=$(verdict_of "$ROOT_DIR/ops/security/tests/agent-contract.test.sh")
+R_SECRETS=$(verdict_of "$ROOT_DIR/ops/security/secret-scan.sh")
+R_STATIC=$(verdict_of "$ROOT_DIR/ops/security/static-security-check.sh")
+R_POLICY=$(verdict_of "$ROOT_DIR/ops/security/policy-check.sh")
+if [[ "$R_SECRETS" == "PASS" && "$R_STATIC" == "PASS" ]]; then R_P7="PASS"; else R_P7="FAIL"; fi
+if [[ "$R_P2" == "PASS" && "$R_P3" == "PASS" && "$R_P6" == "PASS" ]]; then R_TESTS="PASS"; else R_TESTS="FAIL"; fi
+R_P5="NOT VERIFIED"
+if [[ -f "$ROOT_DIR/README.md" && -d "$ROOT_DIR/docs" ]]; then R_P5="PASS"; fi
+
+echo "P1 Environment          $R_P1"
+echo "P2 Privilege            $R_P2"
+echo "P3 Toolchain            $R_P3"
 echo "P4 PowerShell           $P4_STATUS"
-echo "P5 Repository           $(if [[ -f "$ROOT_DIR/README.md" && -d "$ROOT_DIR/docs" ]]; then echo "PASS"; else echo "NOT VERIFIED"; fi)"
-echo "P6 Agent Contract       $(if "$ROOT_DIR/ops/security/tests/agent-contract.test.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "P7 Verification         $(if "$ROOT_DIR/ops/security/secret-scan.sh" >/dev/null 2>&1 && "$ROOT_DIR/ops/security/static-security-check.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
+echo "P5 Repository           $R_P5"
+echo "P6 Agent Contract       $R_P6"
+echo "P7 Verification         $R_P7"
 echo ""
-echo "Security                $(if "$ROOT_DIR/ops/security/policy-check.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "Secrets                 $(if "$ROOT_DIR/ops/security/secret-scan.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "Policy                  $(if "$ROOT_DIR/ops/security/policy-check.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
-echo "Tests                   $(if "$ROOT_DIR/ops/security/tests/privilege-policy.test.sh" >/dev/null 2>&1 && "$ROOT_DIR/ops/linux/tests/toolchain.test.sh" >/dev/null 2>&1 && "$ROOT_DIR/ops/security/tests/agent-contract.test.sh" >/dev/null 2>&1; then echo "PASS"; else echo "FAIL"; fi)"
+echo "Security                $R_POLICY"
+echo "Secrets                 $R_SECRETS"
+echo "Policy                  $R_POLICY"
+echo "Tests                   $R_TESTS"
 echo "Git Hygiene             $(if [[ -f "$ROOT_DIR/.gitignore" ]] && ! find "$ROOT_DIR" -maxdepth 2 -name "*.deb" 2>/dev/null | grep -q ".deb"; then echo "PASS"; else echo "FAIL"; fi)"
 echo "System Changes          NONE (repository-only)"
 echo ""
@@ -301,12 +327,14 @@ echo ""
 
 # Essential checks that must PASS (not BLOCKED)
 ESSENTIAL_FAIL=false
-if ! "$ROOT_DIR/ops/security/policy-check.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
-if ! "$ROOT_DIR/ops/security/secret-scan.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
-if ! "$ROOT_DIR/ops/security/static-security-check.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
-if ! "$ROOT_DIR/ops/security/tests/privilege-policy.test.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
-if ! "$ROOT_DIR/ops/linux/tests/toolchain.test.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
-if ! "$ROOT_DIR/ops/security/tests/agent-contract.test.sh" >/dev/null 2>&1; then ESSENTIAL_FAIL=true; fi
+# P13: reuse the cached verdicts computed for the report above instead of
+# re-running the same six suites a second time.
+if [[ "$R_POLICY" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
+if [[ "$R_SECRETS" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
+if [[ "$R_STATIC" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
+if [[ "$R_P2" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
+if [[ "$R_P3" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
+if [[ "$R_P6" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
 
 # Check for missing essential files
 if [[ ! -f "$ROOT_DIR/AGENTS.md" || ! -f "$ROOT_DIR/ARENA.md" || ! -f "$ROOT_DIR/ops/security/privilege-policy.md" || ! -f "$ROOT_DIR/ops/security/privilege-gate.sh" ]]; then
