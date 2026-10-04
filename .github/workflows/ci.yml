@@ -368,10 +368,38 @@ jobs:
           fetch-depth: 1
 
       - name: PowerShell policy tests (P4) - logic only, install may be BLOCKED
+        # P13: this step failed on the runner with a bare "exit code 1" and the
+        # job log could not be retrieved from the Arena sandbox (the log archive
+        # is served from *.blob.core.windows.net, which is blocked here). The
+        # trace is therefore captured and re-emitted as a workflow annotation,
+        # which *is* readable from Arena, so a red P4 is diagnosable without the
+        # log archive. The pass/fail semantics of the step are unchanged: the
+        # test script's own exit code is still the step's exit code.
         run: |
+          set -eo pipefail
           echo "=== PowerShell policy tests (P4) ==="
+          echo "runner pwsh: $(command -v pwsh || echo 'NOT FOUND')"
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "runner pwsh --version: $(pwsh --version 2>&1 || echo 'pwsh --version FAILED')"
+          fi
           chmod +x ops/powershell/install-pwsh.sh ops/powershell/tests/powershell-install.test.sh ops/security/privilege-gate.sh
-          ./ops/powershell/tests/powershell-install.test.sh
+          set +e
+          bash -x ./ops/powershell/tests/powershell-install.test.sh > /tmp/p4-trace.txt 2>&1
+          P4_RC=$?
+          set -e
+          cat /tmp/p4-trace.txt
+          echo ""
+          echo "=== P4 test exit code: $P4_RC ==="
+          if [ "$P4_RC" -ne 0 ]; then
+            # Surface the tail of the trace as an annotation so the failing line
+            # is visible without downloading the log archive.
+            {
+              echo "p4-exit=$P4_RC"
+              tail -n 45 /tmp/p4-trace.txt
+            } > /tmp/p4-annot.txt
+            echo "::error file=ops/powershell/tests/powershell-install.test.sh,line=1,title=P4 test suite exited $P4_RC (trace tail)::$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/\n/%0A/g' /tmp/p4-annot.txt | tr -d '\n')"
+            exit "$P4_RC"
+          fi
           echo ""
           echo "=== P4 Semantics ==="
           echo "ARENA_P4_STATUS = BLOCKED (packages.microsoft.com and release-assets.githubusercontent.com blocked in Arena)"
