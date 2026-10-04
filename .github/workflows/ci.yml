@@ -98,7 +98,8 @@ jobs:
           git diff --stat || echo "no diff"
 
       - name: CI Configuration check
-        # P13 FIX: this step used to grep ci.yml for the bare strings "write-all",
+        # CI-H1 FIX (CI hardening, NOT phase P13 - see ADR 0011 D4):
+        # this step used to grep ci.yml for the bare strings "write-all",
         # "actions/checkout@v", "pull_request_target" and "workflow_run". All four
         # patterns matched the step's OWN source text (the grep commands and echo
         # strings), so the step self-failed with "FAIL: write-all found" on every
@@ -108,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
           CI=.github/workflows/ci.yml
-          echo "=== CI Configuration check (P13: self-match-safe) ==="
+          echo "=== CI Configuration check (CI-H1: self-match-safe) ==="
 
           echo "-- 1. Token permissions (least privilege) --"
           if grep -Eq '^[[:space:]]*permissions:[[:space:]]*write-all[[:space:]]*$' "$CI"; then
@@ -218,7 +219,8 @@ jobs:
           ./ops/security/static-security-check.sh
 
       - name: Security patterns check (no arbitrary execution as executable)
-        # P13 FIX: this step used to grep `ops scripts` with no file filter, so it
+        # CI-H1 FIX (CI hardening, NOT phase P13 - see ADR 0011 D4):
+        # this step used to grep `ops scripts` with no file filter, so it
         # scanned ops/security/forbidden-commands.txt - the denylist data file,
         # whose whole purpose is to enumerate "curl | bash" and "wget | bash" as
         # forbidden strings. The curl check only slipped through because an
@@ -302,7 +304,8 @@ jobs:
           fetch-depth: 1
 
       - name: Ensure P3 toolchain baseline (provision, then verify)
-        # P13: Job 4 used to assume every P3 tool was already on the runner.
+        # CI-H4 (CI hardening, NOT phase P13 - see ADR 0011 D4):
+        # Job 4 used to assume every P3 tool was already on the runner.
         # toolchain.test.sh is a verification test, so a runner that happens to
         # lack pkg-config/zip/wget turns P3 into a false FAIL (observed in the
         # Arena sandbox: 43/44, only pkg-config missing). The runner image is not
@@ -368,7 +371,8 @@ jobs:
           fetch-depth: 1
 
       - name: PowerShell policy tests (P4) - logic only, install may be BLOCKED
-        # P13: this step failed on the runner with a bare "exit code 1" and the
+        # CI-H3 (CI hardening, NOT phase P13 - see ADR 0011 D4):
+        # this step failed on the runner with a bare "exit code 1" and the
         # job log could not be retrieved from the Arena sandbox (the log archive
         # is served from *.blob.core.windows.net, which is blocked here). The
         # trace is therefore captured and re-emitted as a workflow annotation,
@@ -536,7 +540,9 @@ jobs:
           echo "LINEX.OS CI - Foundation Verification"
           echo "P1: PASS"
           echo "P2: PASS (28/28)"
-          echo "P3: PASS (44/44)"
+          echo "P3: PASS on this runner (44/44) because the step above provisions the baseline first."
+          echo "    In a fresh Arena sandbox the same commit measures 43/44: pkg-config absent and"
+          echo "    the apt mirror unreachable - ENVIRONMENT-DEPENDENT, not a repository defect (ADR 0011 D2)."
           echo "P4: BLOCKED in Arena (network), logic PASS (18/18) - ARENA_P4_STATUS=BLOCKED, REMOTE_CI_P4_STATUS depends on runner"
           echo "P5: PASS"
           echo "P6: PASS (15/15)"
@@ -549,6 +555,6 @@ jobs:
           echo "CI does NOT require Docker, PowerShell, Cloud credentials, API keys, Database"
           echo ""
           echo "REMOTE CI: This run is REMOTE CI VERIFIED (on GitHub Actions)"
-          echo "LOCAL ARENA: PASS WITH KNOWN BLOCKER (if run in Arena, branch not pushed)"
+          echo "LOCAL ARENA: PASS WITH ONE ENVIRONMENT BLOCKER (P3 pkg-config, doctor exit 3) - see docs/reports/"
           echo ""
-          echo "NEXT: P8 Architecture Design (after Foundation)"
+          echo "NEXT: P13 Agent Runtime Contract (contracts only) - P8-P12 COMPLETE, see docs/architecture/roadmap.md"

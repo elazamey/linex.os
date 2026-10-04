@@ -1,4 +1,9 @@
-# LINEX.OS — Roadmap (P8)
+# LINEX.OS — Roadmap
+
+Phase ledger reconciled to merged git state at `d349f92` per ADR 0011 (D4). Status values
+follow ADR 0011 (D2): `COMPLETE` means the phase's documents exist, are self-consistent and are
+machine-checked by a shipped suite that passes — it never means "implemented". Measurements are
+re-derivable via `docs/reports/baseline-audit-d349f92.md`.
 
 ## Foundation (P1-P7) — COMPLETE
 
@@ -6,26 +11,45 @@
 P1 ✅ COMPLETE — Environment Discovery, Bootstrap Foundation (read-only, fail-closed)
 P2 ✅ COMPLETE — Privilege Policy / Gate (allowlist + structured actions + dry-run + evidence, 28 tests)
 P3 ✅ COMPLETE — Linux Toolchain (gcc, g++, make, pkg-config, 44 tests, C/C++ smoke)
+  - Re-measured at d349f92: 43/44 PASS in a fresh Arena sandbox, 1 FAIL = pkg-config MISSING
+  - pkg-config is ENVIRONMENT-DEPENDENT per ADR 0011 (D2): a previous sandbox built pkgconf
+    from source outside the repository, which is not re-derivable from repository contents
+  - Cause measured, not assumed: apt-get -s install pkg-config → "Unable to locate package";
+    deb.debian.org → curl (52) Empty reply. Not remediable in-sandbox, no system changes made
+  - CI Job 4 (Toolchain Tests P3) succeeds because ci.yml provisions the P3 baseline first
+    (CI-H4) and then lets the test verify it — the runner image is not part of the contract
 P4 ⛔ BLOCKED — PowerShell 7 (Arena network restriction: packages.microsoft.com and release-assets blocked, github.com PASS, Gate and logic PASS 18 tests, no third-party)
 P5 ✅ COMPLETE — Repository Foundation (docs/, config/, tests/, .github/workflows/, README, LICENSE, SECURITY, CONTRIBUTING, .gitignore)
 P6 ✅ COMPLETE — Agent Contract (AGENTS.md, ARENA.md, docs/agent-contract.md, 15 tests)
 P7 ✅ COMPLETE — Doctor + CI Hardening + Final Foundation Verification (PASS WITH KNOWN BLOCKER P4)
-  - Doctor aggregator true (47 PASS, 0 FAIL, 2 BLOCKED known)
+  - Doctor aggregator: measured at d349f92 in Arena → Counts PASS=45 FAIL=1 BLOCKED=2
+    NOT_VERIFIED=1, exit 3 (FAIL). Single root cause: pkg-config absent (see P3 above), which
+    cascades P3 suite → doctor "P3 Toolchain Tests" → doctor "Tests" → exit 3. On the GitHub
+    runner Job 6 (Doctor / Final Verification) is success. Exit semantics deliberately
+    unchanged: a required tool missing is a real FAIL, and the classification lives in the
+    evidence layer, not in the aggregator (ADR 0011 D3)
   - Secret-scan repository-wide including tests/ and .github, no directory exclusion (P7 fix)
   - Static-security-check (no eval, curl|bash, etc. as executable, Test/Policy Boundary for tests/)
   - CI hardened: permissions contents: read, pinned checkout SHA 3d3c42e5aac5ba805825da76410c181273ba90b1 v7.0.1, 6 jobs, no Docker/PowerShell required
   - Verification-summary.txt artifact, no secrets
   - FOUNDATION STATUS: PASS WITH KNOWN BLOCKER
 
-REMOTE CI: NOT VERIFIED — branch arena/01a107fc-linex-os not pushed, main at 768bf39, per P7/P8 spec no push
+REMOTE CI: VERIFIED at d349f92 — CI run 37233042304 on main, 6/6 jobs success (Job 1 static
+validation, Job 2 security, Job 3 policy P2, Job 4 toolchain P3, Job 5 contracts P4/P6,
+Job 6 doctor P7). Verified at job-conclusion granularity only: runner log bodies are NOT
+RETRIEVABLE from Arena (results-receiver.actions.githubusercontent.com → EOF), so any claim
+about log contents stays NOT VERIFIED (ADR 0011 D7).
+The earlier "REMOTE CI: NOT VERIFIED — branch not pushed, main at 768bf39" statement described
+the P7/P8 no-push policy of that time and is superseded: PR #1 and PR #2 were both pushed and
+merged.
 
-FOUNDATION = VERIFIED locally
+FOUNDATION = VERIFIED locally, with one ENVIRONMENT-DEPENDENT gap (P3 pkg-config)
 ```
 
-## Architecture (P8) — CURRENT
+## Architecture (P8) — COMPLETE
 
 ```
-P8 ▶ Architecture Design ONLY (this phase)
+P8 ✅ COMPLETE — Architecture Design ONLY (this phase)
   - No product code, no runtime implementation, no UI/API/Agent/MCP/DB implementation
   - Documentation and ADR files and diagrams-as-text only
   - Model C recommended: AI-native execution environment above Linux first, deeper OS integration later (hybrid)
@@ -65,78 +89,151 @@ P8 ▶ Architecture Design ONLY (this phase)
   - Open decisions: Programming Language, Runtime tech, Database, Event bus, Sandbox, UI framework, API framework, Browser engine, MCP transport, Deployment topology — all DECISION PENDING with criteria
   - Architecture tests: tests/architecture.test.sh, verify-architecture.sh
   - P7 security fix continuation: static-security-check Test/Policy Boundary for tests/ fixtures non-executable vs executable
-  - P4 preserved BLOCKED, Remote CI NOT VERIFIED, System changes NONE, Git no push
+  - P4 preserved BLOCKED, System changes NONE
+  - Historical scope note: at the time P8 executed, its own constraint was "Remote CI NOT
+    VERIFIED, Git no push". That constraint bound P8, not the project: PR #1 and PR #2 were
+    subsequently pushed and merged, and remote CI is now VERIFIED at d349f92 (see Foundation)
 ```
 
-## Next — Core Runtime and Beyond (P9+)
+## Contract Phases (P9-P12) — COMPLETE
+
+Contracts only. No implementation language was chosen and no product code exists, per the P8
+freeze and ADR 0009 (`DECISION PENDING` until Technology Selection). Every `COMPLETE` below
+means "contract written, self-consistent, machine-checked" — not "implemented".
 
 ```
-P9 → Core Runtime Contract
-  - Define interfaces for Core Runtime, Substrate, bootstrap, verification, toolchain detection
-  - No implementation yet, only contracts and interfaces
-  - Must respect P8 architecture freeze, any violation requires ADR
+P9  ✅ COMPLETE — Core Runtime Contract (ADR 0007 ACCEPTED)
+      docs/contracts/{runtime,task,action,event,result,lifecycle}.md
+      tests/contracts.test.sh → 15/15 PASS · verify-contracts.sh → 46 PASS / 0 FAIL
 
-P10 → Execution Authority
-  - Define executors Shell, Process, File, Network, Package with interfaces, capability required, risk, resource limits, evidence
-  - Implement Gate as Execution Authority Level 0, with roadmap to Level 1-6
-  - No product code that violates trust boundary
+P10 ✅ COMPLETE — Execution Authority Contract (ADR 0008 ACCEPTED)
+      docs/contracts/execution-authority.md, executor-{shell,process,file,network,package}.md,
+      executor-matrix.md, execution-lifecycle.md — 5 executor contracts, no executor code
+      tests/execution-authority.test.sh → 36/36 PASS · verify-execution-authority.sh → 67/0
 
-P11 → Policy Engine
-  - Implement Policy Engine with inputs Actor/Action/Capability/Resource/Scope/Risk/Env/Context/Approval/Network, decisions ALLOW/DENY/REQUIRE_APPROVAL/DRY_RUN, fail-closed UNKNOWN→DENY
-  - Capability Registry, risk scoring, approval levels
-  - No bypass
+P11 ✅ COMPLETE — Policy Engine Contract (ADR 0009 ACCEPTED)
+      docs/contracts/{policy,policy-matrix,policy-lifecycle}.md — decision model, risk classes,
+      fail-closed cases, determinism, no policy engine code
+      tests/policy.test.sh → 40/40 PASS · verify-policy.sh → 104 PASS / 0 FAIL
 
-P12 → Capability System
-  - Implement CAP_* model with Risk, Scope, Approval, Executor, Verifier, DEFAULT DENY
-  - Resource scoping workspace/repository/project/user/host/network/production with explicit elevation
-  - Tests for capability elevation
+P12 ✅ COMPLETE — Capability Registry Contract (ADR 0010 ACCEPTED)
+      docs/contracts/{capability,capability-registry,capability-lifecycle}.md — CAP_* model,
+      scope, risk, approval, executor, verifier, DEFAULT DENY, no registry code
+      tests/capability.test.sh → 45/45 PASS · verify-capability.sh → 87 PASS / 0 FAIL
 
-P13 → Agent Runtime
-  - Implement Agent model with Identity, Role, Capabilities, Context, Memory, Planner, Tools, Policies, Evidence
-  - Planner proposes, not executes, via Policy
-  - No LLM→shell direct
+CI-H1…CI-H6 ✅ COMPLETE — CI hardening (NOT a phase; formerly mislabelled "P13 FIX")
+      CI-H1 self-matching grep checks fixed in ci.yml: the configuration step and the security
+            patterns step matched their own source text and failed every run
+      CI-H2 workflow_dispatch-only debug runner added (ci-debug.yml) to recover runner evidence
+      CI-H3 P4 failure surfaced as a workflow annotation, because the runner log archive is
+            unreachable from Arena
+      CI-H4 Job 4 provisions the P3 toolchain baseline before verifying it — the runner image is
+            not part of the LINEX.OS contract, so a runner missing pkg-config used to turn P3
+            into a false FAIL
+      CI-H5 powershell TEST-1 no longer asserts the host is Debian 12 (an Arena property); it
+            verifies the installer's OS gate distro-agnostically, including fail-closed
+      CI-H6 scripts/doctor.sh final report reuses cached verdicts instead of re-running every
+            suite inside concurrent $(...) substitutions, which made rows nondeterministic
+      Touched: .github/workflows/ci.yml, ci-debug.yml,
+               ops/powershell/tests/powershell-install.test.sh, scripts/doctor.sh
+      Evidence: CI run 37233042304 on main → 6/6 jobs success
+```
 
-P14 → Tool Runtime
-  - Implement Tool Contract with ID, Version, Input/Output schema, Capability required, Risk class, Execution authority, Timeout, Resource limits, Evidence
-  - Unknown Tool → BLOCKED
-  - Tool provenance, hash, version pinning
+## Phase Sequence (P13 onward) — AUTHORITATIVE
 
-P15 → Skill Runtime
-  - Implement Skill as reusable higher-level procedure composing tools
-  - Skill registry, trust, capability mapping
+Authority: ADR 0011 (D4), which adopts the sequence recorded in the `ACCEPTED` ADRs
+0007 → 0010 and `docs/contracts/README.md`, because that is the sequence P9-P12 actually
+executed. Where the P8-era sketch below differed, the ADR sequence prevails.
 
-P16 → MCP Gateway
-  - Implement MCP Gateway with Registry, trust classification, capability mapping, input/output validation, timeout, network policy, audit, isolation
-  - No unbounded host access
+```
+P13 ▶ NEXT — Agent Runtime Contract (CONTRACTS ONLY, no implementation)
+  - Agent model: Identity, Role, Capabilities, Context, Memory reference, Planner, Tools,
+    Policies, Evidence requirements
+  - Planner PROPOSES, never executes; path stays Planner → Policy → Authorization →
+    Execution Authority → Verifier → Evidence
+  - No LLM → shell direct path, no LLM as final authority, no permission inferred from
+    natural-language intent alone (intent → structured Action → schema validation → Policy)
+  - Consumes P9 Action/Task contracts, P10 Execution Authority, P11 Policy decisions,
+    P12 Capability Registry; must not duplicate or redefine any of them
+  - Must respect the P8 freeze; any violation requires an ADR
+  - Deliverables: docs/contracts/agent*.md, ADR 0012, tests/agent-runtime.test.sh,
+    ops/verify/verify-agent-runtime.sh
+  - Explicitly NOT delivered: no agent code, no runtime, no LLM integration, no package
+    install, no new implementation language
 
-P17 → Services Layer
-  - Filesystem Service, Process Service, Network Service, Memory Service, Event Bus, Artifact Store, Evidence Store, Identity/Auth, Configuration Service, Observability, Plugin Registry
-  - Each with Purpose/Inputs/Outputs/Trust/Dependencies/May Do/Must Never Do, via Policy
+P14 → Tool + Skill Contract (CONTRACTS ONLY)
+  - Tool Contract: ID, semver Version, Input/Output schema, Capability required, Risk class,
+    Execution authority, Timeout, Resource limits, Evidence requirements; Unknown Tool → BLOCKED
+  - Tool provenance: source, version, hash, version pinning
+  - Skill model: Skill = reusable procedure composing Tools; Tool vs Skill vs Agent vs Workflow
+  - Skill registry, trust classification, capability mapping
 
-P18 → Memory Service
-  - Implement Ephemeral, Session, Project, User, System memory with ownership, retention, access policy, encryption, deletion
+P15 → Memory / State / Event Contracts
+  - Memory: Ephemeral, Session, Project, User, System with ownership, retention, access policy,
+    encryption, deletion
+  - Event Store append-only immutable, State Store lifecycle, storage abstraction interfaces
 
-P19 → Event Bus and State Store
-  - Implement Event Store append-only immutable, State Store lifecycle
+P16 → Verification / Eval Contract
+  - Verification Engine: logs, evidence, tests, attestations; enforces SUCCEEDED ≠ VERIFIED,
+    EXECUTED ≠ SAFE, LOCAL PASS ≠ PRODUCTION PASS, MOCK ≠ PRODUCTION
 
-P20 → Verification Engine
-  - Implement Verification Engine with logs, evidence, tests, attestations, distinguishes SUCCEEDED vs VERIFIED
+P17 → MCP Contract
+  - MCP Gateway, Server Registry, trust classification, capability mapping, input/output
+    validation, timeout, network policy, audit, isolation; no unbounded host access
 
-P21 → API Boundary
-  - Implement conceptual API domains /health, /agents, /actions, etc. with auth, validation, rate limiting, no privileged logic in UI
+P18 → Technology Selection ← IMPLEMENTATION LANGUAGE IS DECIDED HERE
+  - Resolve the Open Decisions below against their stated criteria, each with its own ADR
+  - Implementation begins only after P18; until then every phase is contracts and gates only
+  - Note: introducing an implementation language earlier would violate the P8 freeze
+    (ADR 0011 D5 records a rejected attempt to do exactly that)
 
-P22 → UI Boundary
-  - Implement UI as client only, UI→API only
+IMPLEMENTATION PHASES (post-P18, numbered only after Technology Selection)
+  - Services Layer, API Boundary, UI Boundary, Observability, Security Hardening / sandboxing
+    Level 1-4 — see Superseded Backlog below for the subject list
+```
 
-P23 → Observability
-  - Implement Logs, Metrics, Traces, Events, Audit, Evidence with distinction, no secrets
+### Superseded Backlog (subjects preserved, old numbering retired)
 
-P24 → Security Hardening
-  - Implement sandboxing Level 1-4, resource limits, network isolation, secret manager, signature verification
+The P8-era sketch numbered twelve further phases before implementation (P13 Agent Runtime,
+P14 Tool Runtime, P15 Skill Runtime, P16 MCP Gateway, P17 Services Layer, P18 Memory Service,
+P19 Event Bus and State Store, P20 Verification Engine, P21 API Boundary, P22 UI Boundary,
+P23 Observability, P24 Security Hardening). ADR 0011 (D4) supersedes that numbering from P15
+onward. No subject is dropped; each maps to its new home:
 
-... (future)
+```
+Skill Runtime                          → P14 (Tool + Skill Contract)
+MCP Gateway                            → P17
+Memory Service                         → P15
+Event Bus and State Store              → P15
+Verification Engine                    → P16
+Services Layer                         → post-P18 implementation
+API Boundary                           → post-P18 implementation
+UI Boundary                            → post-P18 implementation
+Observability                          → post-P18 implementation
+Security Hardening (sandbox Level 1-4,
+  resource limits, network isolation,
+  secret manager, signature verify)    → post-P18 implementation
+```
 
-Final: Product Code, Apps, etc. only after Core Runtime, Policy, Capability, Agent Runtime, etc. PASS
+### Retired Labels
+
+```
+"P14 Control Plane MVP"  → RETIRED. Never an authoritative phase: it matches neither this
+                           roadmap nor the ADR sequence, and its claimed deliverable (a
+                           control/ package, a digest CLI, 181 pytest tests, a git bundle)
+                           does not exist in the repository or on the remote — the referenced
+                           commit is absent from GitHub (ADR 0011 D1, D4).
+"P13 FIX" labels         → RELABELLED CI-H1…CI-H6 in ci.yml, ci-debug.yml,
+                           powershell-install.test.sh and doctor.sh. Those were CI repairs,
+                           not phase P13; P13 is Agent Runtime Contract.
+```
+
+### Implementation Gate (unchanged)
+
+```
+Final: Product Code, Apps, etc. only after Core Runtime, Policy, Capability, Agent Runtime,
+Tool/Skill, Memory/State/Event, Verification, MCP contracts PASS and Technology Selection
+(P18) has decided the implementation language via ADR.
 ```
 
 ## Sandboxing Roadmap (from P8)
@@ -186,5 +283,10 @@ No technologies chosen merely to fill gap.
 - extensibility.md (modularity, supply chain, API/UI boundaries)
 - threat-model.md (16 threats)
 - frozen-baseline.md (freeze)
-- ADRs 0001-0006
+- ADRs 0001-0006 (P8 architecture decisions)
+- ADRs 0007-0010 (P9-P12 contract phases, the sequence D4 adopts)
+- adr/0011-baseline-reconciliation-and-phase-numbering.md (status authority, evidence rules,
+  phase numbering authority, retired labels — the reason this ledger reads the way it does)
+- docs/reports/README.md (evidence report convention R1-R6)
+- docs/reports/baseline-audit-d349f92.md (the measurements behind every status above)
 - AGENTS.md, ARENA.md, docs/security.md, privilege-policy.md, agent-contract.md

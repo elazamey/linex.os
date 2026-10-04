@@ -22,16 +22,36 @@ LINEX.OS is being built as a disciplined, verifiable **Agent OS** — not a rand
 
 ---
 
-## Current Status (P0-P5)
+## Current Status
+
+Authoritative phase ledger: `docs/architecture/roadmap.md`, reconciled to merged git state by
+`docs/architecture/adr/0011-baseline-reconciliation-and-phase-numbering.md`. Measurements below
+were taken at commit `d349f92` and are re-derivable via
+`docs/reports/baseline-audit-d349f92.md`.
+
+`COMPLETE` in this project means **the phase's documents/contracts exist, are self-consistent and
+are machine-checked by a shipped suite that passes**. It never means "implemented" — the
+repository intentionally contains no product code until Technology Selection (ADR 0011 D5).
 
 | Milestone | Status | Evidence |
 |-----------|--------|----------|
 | **P0 Environment Discovery** | ✅ PASS | Debian 12 bookworm x86_64, apt-get, sudo NOPASSWD: ALL, Node 22, Python 3.11, Git 2.39.5 |
 | **P1 Bootstrap Foundation** | ✅ COMPLETE | `ops/bootstrap/bootstrap.sh`, `ops/verify/verify-environment.sh`, `scripts/doctor.sh` — read-only, fail-closed, no install |
-| **P2 Privilege Policy / Gate** | ✅ COMPLETE | `ops/security/privilege-gate.sh` — allowlist + structured actions + dry-run default, 28 tests PASS |
-| **P3 Linux Toolchain** | ✅ COMPLETE | gcc 12.2.0, g++ 12.2.0, make 4.3, pkg-config 3.0.0 (built from GitHub pkgconf), python3, node, npm — 44 tests PASS |
-| **P4 PowerShell 7** | ⛔ BLOCKED — Arena Network | `packages.microsoft.com` BLOCKED (SSL_ERROR_SYSCALL), `release-assets.githubusercontent.com` BLOCKED, `github.com` PASS, `api.github.com` PASS — Gate and install logic PASS (18 tests), but binary download blocked, no third-party used |
-| **P5 Repository Foundation** | ▶ IN PROGRESS (this phase) | docs/, config/, tests/, .github/workflows/ci.yml, README, CONTRIBUTING, SECURITY, LICENSE |
+| **P2 Privilege Policy / Gate** | ✅ COMPLETE | `ops/security/privilege-gate.sh` — allowlist + structured actions + dry-run default, 28/28 tests PASS |
+| **P3 Linux Toolchain** | ✅ COMPLETE with one ENVIRONMENT-DEPENDENT gap | gcc 12.2.0, g++ 12.2.0, make 4.3, python3 3.11.2, node 22, npm 10.9.8 present. **43/44 tests PASS in a fresh Arena sandbox**: `pkg-config` is MISSING here (a previous sandbox built pkgconf from source outside the repo, which is not re-derivable — ADR 0011 D2) and the apt mirror is unreachable, so it cannot be installed in-sandbox. CI Job 4 succeeds because `ci.yml` provisions the P3 baseline (including `pkg-config`) before running the verification test (CI-H4) |
+| **P4 PowerShell 7** | ⛔ BLOCKED — Arena Network | `packages.microsoft.com` BLOCKED (SSL_ERROR_SYSCALL), `release-assets.githubusercontent.com` BLOCKED, `github.com` PASS, `api.github.com` PASS — Gate and install logic PASS (18/18 tests), but binary download blocked, no third-party used |
+| **P5 Repository Foundation** | ✅ COMPLETE | docs/, config/, tests/, .github/workflows/ci.yml, README, CONTRIBUTING, SECURITY, LICENSE |
+| **P6 Agent Contract** | ✅ COMPLETE | `AGENTS.md`, `ARENA.md`, `docs/agent-contract.md` — 15/15 tests PASS |
+| **P7 Doctor + CI Hardening** | ✅ COMPLETE | `scripts/doctor.sh`, `ops/security/{policy-check,secret-scan,static-security-check}.sh` — all three PASS; doctor exit 3 in Arena, caused solely by the P3 pkg-config gap (ADR 0011 D3 keeps that FAIL honest) |
+| **P8 Architecture Design** | ✅ COMPLETE + FROZEN | 14 architecture docs, ADRs 0001-0006, `frozen-baseline.md` — 15/15 tests PASS |
+| **P9 Core Runtime Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/{runtime,task,action,event,result,lifecycle}.md`, ADR 0007 — 15/15 tests PASS |
+| **P10 Execution Authority Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/execution-authority.md` + 5 executor contracts + matrix + lifecycle, ADR 0008 — 36/36 tests PASS |
+| **P11 Policy Engine Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/{policy,policy-matrix,policy-lifecycle}.md`, ADR 0009 — 40/40 tests PASS |
+| **P12 Capability Registry Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/{capability,capability-registry,capability-lifecycle}.md`, ADR 0010 — 45/45 tests PASS |
+| **CI-H1…CI-H6 CI hardening** | ✅ COMPLETE (not a phase) | Self-matching CI checks fixed, dispatch-only debug runner added, P4 failure surfaced as an annotation, Job 4 provisions the P3 baseline before verifying it, PowerShell TEST-1 made distro-agnostic, doctor report made deterministic. Formerly mislabelled "P13 FIX" across `ci.yml`, `ci-debug.yml`, `powershell-install.test.sh`, `doctor.sh` |
+| **Remote CI** | ✅ VERIFIED at `d349f92` | Run `37233042304` on `main`: 6/6 jobs success. Job-level granularity only — runner log bodies are not retrievable from Arena (ADR 0011 D7) |
+| **P13 Agent Runtime Contract** | ▶ NEXT | Contracts only: Agent/Planner model, no LLM → shell path, no agent code |
+
 
 **P4 Blocker Details:**
 - Microsoft Repository: `https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb` → BLOCKED (Arena sandbox blocks packages.microsoft.com:443)
@@ -191,22 +211,46 @@ P3 Linux Toolchain → COMPLETE (detect missing, Gate dry-run, Gate --execute on
   ↓
 P4 PowerShell → BLOCKED (Arena network: packages.microsoft.com and release-assets.githubusercontent.com blocked, github.com PASS, no third-party)
   ↓
-P5 Repository Foundation → IN PROGRESS (this phase)
+P5 Repository Foundation → COMPLETE
   ↓
-P6 Agent Contract (AGENTS.md, ARENA.md) → NEXT after P5
+P6 Agent Contract (AGENTS.md, ARENA.md) → COMPLETE (15/15)
   ↓
-P7 Doctor + CI + complete verify
+P7 Doctor + CI + complete verify → COMPLETE
   ↓
-P8 Architecture
+P8 Architecture Design → COMPLETE + FROZEN (15/15)
   ↓
-P9+ Product Code
+P9 Core Runtime Contract → COMPLETE (15/15, contracts only)
+  ↓
+P10 Execution Authority Contract → COMPLETE (36/36, contracts only)
+  ↓
+P11 Policy Engine Contract → COMPLETE (40/40, contracts only)
+  ↓
+P12 Capability Registry Contract → COMPLETE (45/45, contracts only)
+  ↓
+P13 Agent Runtime Contract → NEXT (contracts only)
+  ↓
+P14 Tool + Skill Contract → P15 Memory/State/Event → P16 Verification/Eval → P17 MCP
+  ↓
+P18 Technology Selection → implementation language decided here, by ADR
+  ↓
+Implementation phases → Product Code (only after P18)
 ```
+
+**Not `P9+ Product Code`:** the P9-P12 phases delivered *contracts*, not code. No product code
+exists in this repository, and none may until Technology Selection decides the implementation
+language (ADR 0009 `DECISION PENDING`, ADR 0011 D5). Introducing a language earlier would
+violate the P8 freeze.
 
 **Why this order?** Because `sudo NOPASSWD: ALL` means system does not enforce fine-grained limits on Arena. So `privilege-gate.sh` must be built as project control layer BEFORE any script that uses sudo. This prevents `install-pwsh.sh` from becoming first channel of root execution without restrictions.
 
-**Current Branch:** `arena/01a107fc-linex-os` (not yet on GitHub, only `main` at 768bf39 exists on remote, per decision no auto commit/push)
+**Branch model:** `main` is the only long-lived branch and is the source of truth for status.
+Work happens on per-session `arena/*` branches which **are pushed** and merged by pull request
+(PR #1 delivered P1-P12 contracts, PR #2 delivered CI hardening). An unpushed branch is not
+evidence and does not survive its sandbox — ADR 0011 (D1) records a handoff that was lost
+exactly this way.
 
-**Git Hygiene:** No auto commit/push/merge/deployment. Show `git status --short` and changed files only.
+**Git Hygiene:** No force push, no history rewrite, no merge to `main` outside a reviewed pull
+request. Show `git status --short` and changed files for every change.
 
 ---
 
@@ -224,24 +268,34 @@ P9+ Product Code
 ./ops/powershell/tests/powershell-install.test.sh
 ```
 
-**Output example (P5):**
+**Output measured at `d349f92` in a fresh Arena sandbox (not an idealised example):**
 
 ```
 Repository       → PASS
 Git              → PASS
 Linux shell      → PASS
 sudo             → PASS (AVAILABLE_NOPASSWD - requires P2 policy)
-PowerShell       → NOT VERIFIED / BLOCKED (P4 network restriction, expected)
-Package manager  → PASS (apt-get)
-Network          → PASS (github.com), BLOCKED (deb.debian.org, packages.microsoft.com, release-assets)
-Required tools   → PASS
-Disk             → PASS (20G avail)
-Memory           → PASS (3.6Gi available)
+PowerShell       → BLOCKED (P4 network restriction, expected)
+Package manager  → PASS (apt-get present; mirror unreachable, see Known Blockers)
+Network          → PASS (github.com), BLOCKED (deb.debian.org, packages.microsoft.com)
+Required tools   → NOT VERIFIED (pkg-config MISSING)
+Disk             → PASS
+Memory           → PASS
 Security policy  → PASS
-Tests            → PASS (P2 28/28, P3 44/44, P4 18/18 logic PASS, install BLOCKED)
+Secrets          → PASS
+Tests            → FAIL (P3 43/44 — pkg-config; P2 28/28, P4 18/18, P6 15/15 all PASS)
 
-STATUS → PASS (with PowerShell BLOCKED known)
+Counts: PASS=45 FAIL=1 BLOCKED=2 NOT_VERIFIED=1
+FOUNDATION STATUS: FAIL
+EXIT CODE: 3 (FAIL)
 ```
+
+**Read that FAIL correctly.** Its single root cause is `pkg-config` being absent in this
+sandbox, where the apt mirror is unreachable and no system changes are permitted. The same
+commit is green on GitHub Actions (6/6 jobs, including Job 4 Toolchain). `scripts/doctor.sh`
+deliberately still reports FAIL rather than softening it: a required tool that is missing is a
+real unmet baseline, and the environment explanation belongs in the evidence layer
+(`docs/reports/`), not inside the aggregator — see ADR 0011 (D2, D3).
 
 **No claim PASS without evidence:** Every PASS must have captured command output, version check, or test log.
 
@@ -252,14 +306,16 @@ STATUS → PASS (with PowerShell BLOCKED known)
 | Component | Status | Reason | Evidence | Next |
 |-----------|--------|--------|----------|------|
 | PowerShell 7.6.6 LTS | BLOCKED / NOT VERIFIED | Arena sandbox network blocks packages.microsoft.com:443 and release-assets.githubusercontent.com:443 (where GitHub release binaries hosted) with SSL_ERROR_SYSCALL, while github.com and api.github.com PASS via E2B proxy | curl -v https://packages.microsoft.com → SSL_ERROR_SYSCALL, curl -v https://release-assets.githubusercontent.com → SSL_ERROR_SYSCALL, curl -Is https://github.com → 200 PASS, gh release download → EOF | Requires network allowlist for packages.microsoft.com and release-assets.githubusercontent.com or manual .deb provision into /tmp/linex-os-powershell/ per official Microsoft Learn (Debian 12 supported until 2028-06-30) |
-| Debian apt mirrors | BLOCKED | deb.debian.org Empty reply, all Fastly and non-Fastly Debian mirrors blocked in Arena sandbox | curl -v http://deb.debian.org/debian/dists/bookworm/InRelease → Empty reply, /var/lib/apt/lists empty (3 files only) | P3 workaround via GitHub source build for pkg-config succeeded (pkgconf 3.0.0), but apt packages still blocked |
-| Docker/Podman | NOT INSTALLED / NOT REQUIRED | Not needed for P0-P5, will be considered only if architecture proves need | command -v docker → MISSING (expected) | P? later if needed |
-| Branch on GitHub | NOT YET PUSHED | Decision no auto commit/push in P1-P5, so arena/01a107fc-linex-os not on remote, only main at 768bf39 exists | git branch -a shows arena branch local only, remotes/origin/main only | Will be pushed when foundation is reviewed |
+| Debian apt mirrors | BLOCKED | deb.debian.org Empty reply, all Fastly and non-Fastly Debian mirrors blocked in Arena sandbox | `curl -sSI http://deb.debian.org/debian/dists/bookworm/Release` → curl (52) Empty reply from server; `apt-cache policy pkg-config` → empty; `apt-get -s install pkg-config` → "Unable to locate package" | Install allowlisted packages through `ops/security/privilege-gate.sh` only in an environment with a reachable mirror |
+| `pkg-config` | ENVIRONMENT-DEPENDENT (ADR 0011 D2) | Absent in a fresh Arena sandbox and not installable there (mirror blocked). Present on the GitHub runner | Local: `toolchain.test.sh` → 43/44, `version succeeds: pkg-config → FAIL (MISSING)`. Remote: CI Job 4 success | A previous sandbox built pkgconf 3.0.0 from GitHub source — that build lived outside the repository and is gone, so it cannot be claimed as VERIFIED. Re-install via the Gate where a mirror is reachable |
+| Runner log bodies | NOT RETRIEVABLE from Arena | GitHub serves the log archive from a host that Arena cannot reach | `gh run view 37233042304 --log` → `results-receiver.actions.githubusercontent.com … EOF`; job conclusions still readable via `--json jobs` | Assert `REMOTE CI` from job conclusions only (ADR 0011 D7); this is why `ci.yml` emits P4 failures as annotations |
+| Docker/Podman | NOT INSTALLED / NOT REQUIRED | Not needed for P0-P12, will be considered only if architecture proves need | command -v docker → MISSING (expected) | Post-P18 implementation phases if needed |
 
 **What is NOT a blocker:**
-- gcc, g++, make, build-essential → VERIFIED (already installed via dpkg in base image, 12.2.0, 4.3, 12.9)
-- pkg-config → VERIFIED via workaround (3.0.0 built from GitHub pkgconf/pkgconf)
-- All P1/P2/P3 tests → PASS
+- gcc 12.2.0, g++ 12.2.0, make 4.3, build-essential → VERIFIED (already installed via dpkg in base image)
+- jq 1.6, sha256sum, openssl, git, python3 3.11.2, node 22, npm 10.9.8 → VERIFIED present
+- All P2/P4/P6/P8/P9/P10/P11/P12 suites → PASS (255 of 256 checks overall; the one FAIL is pkg-config)
+- `pytest`, `PyYAML`, `shellcheck`, `yamllint`, `bc` → ABSENT, and **not required**: the verification layer stays inside the shipped toolchain (ADR 0011 D5)
 
 ---
 

@@ -275,7 +275,8 @@ section "LINEX.OS FOUNDATION DOCTOR - FINAL REPORT"
 echo ""
 echo "LINEX.OS FOUNDATION DOCTOR"
 echo ""
-# P13 FIX: the final report used to re-run every suite inside $(...) command
+# CI-H6 FIX (CI hardening, NOT phase P13 - see ADR 0011 D4):
+# the final report used to re-run every suite inside $(...) command
 # substitutions embedded in echo argument lists. Bash expands the command
 # substitutions of a single command concurrently, so one report could spawn ~17
 # nested test suites at once on a 2-vCPU runner, and the rows became
@@ -327,7 +328,7 @@ echo ""
 
 # Essential checks that must PASS (not BLOCKED)
 ESSENTIAL_FAIL=false
-# P13: reuse the cached verdicts computed for the report above instead of
+# CI-H6: reuse the cached verdicts computed for the report above instead of
 # re-running the same six suites a second time.
 if [[ "$R_POLICY" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi
 if [[ "$R_SECRETS" != "PASS" ]]; then ESSENTIAL_FAIL=true; fi

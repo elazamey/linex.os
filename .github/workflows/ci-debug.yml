@@ -1,4 +1,4 @@
-# LINEX.OS - CI Debug Runner (P13)
+# LINEX.OS - CI Debug Runner (CI-H2: CI hardening, NOT phase P13 - see ADR 0011 D4)
 #
 # WHY THIS EXISTS
 # The Arena sandbox cannot download GitHub Actions job logs: the log archive is
