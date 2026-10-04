@@ -391,13 +391,31 @@ jobs:
           echo ""
           echo "=== P4 test exit code: $P4_RC ==="
           if [ "$P4_RC" -ne 0 ]; then
-            # Surface the tail of the trace as an annotation so the failing line
-            # is visible without downloading the log archive.
+            # Surface the failing test as an annotation so it is visible without
+            # downloading the log archive. A plain tail was not enough: the
+            # runner reported 17/18 and the tail only reached back to TEST-17,
+            # so the annotation now carries the FAIL line itself plus the pwsh
+            # evidence that decides TEST-14/TEST-15.
             {
               echo "p4-exit=$P4_RC"
-              tail -n 45 /tmp/p4-trace.txt
+              echo "--- summary ---"
+              grep -E '^(TOTAL|PASSED|FAILED|STATUS|RESULT)' /tmp/p4-trace.txt || true
+              echo "--- failing tests ---"
+              grep -E '→ FAIL' /tmp/p4-trace.txt || echo "(no FAIL line found)"
+              echo "--- last failing test context ---"
+              awk '/^=== TEST/{blk=""} {blk=blk $0 "\n"} /→ FAIL/{printf "%s", blk}' /tmp/p4-trace.txt \
+                | grep -vE '^\+ (printf|log|pass|fail) ' | tail -n 40 || true
+              echo "--- pwsh evidence ---"
+              if command -v pwsh >/dev/null 2>&1; then
+                echo "command -v pwsh: $(command -v pwsh)"
+                echo "pwsh --version raw: [$(pwsh --version 2>&1)] rc=$?"
+                echo "pwsh --version | grep -q PowerShell: $(pwsh --version 2>&1 | grep -q PowerShell && echo MATCH || echo NO-MATCH)"
+                echo "pwsh smoke raw: [$(pwsh -NoLogo -NoProfile -Command '"LINEX.OS POWERSHELL SMOKE PASS"' 2>&1)] rc=$?"
+              else
+                echo "pwsh: NOT FOUND"
+              fi
             } > /tmp/p4-annot.txt
-            echo "::error file=ops/powershell/tests/powershell-install.test.sh,line=1,title=P4 test suite exited $P4_RC (trace tail)::$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/\n/%0A/g' /tmp/p4-annot.txt | tr -d '\n')"
+            echo "::error file=ops/powershell/tests/powershell-install.test.sh,line=1,title=P4 test suite exited $P4_RC (failing test + pwsh evidence)::$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/\n/%0A/g' /tmp/p4-annot.txt | tr -d '\n')"
             exit "$P4_RC"
           fi
           echo ""
