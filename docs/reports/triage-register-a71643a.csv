@@ -1,0 +1,106 @@
+area,artifact,kind,bucket,status,auto_check,evidence,weakness_id,note_ar
+P5,README.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE (existence only),grep -n 'Status:\|Next:' README.md,W7,شهادة الحالة داخل README قديمة: تقول P5/P6 بينما السجل الرسمي يقول P13 NEXT؛ لا يوجد فحص آلي
+P6,AGENTS.md,doc,COMPLETE_VERIFIED,PASS,agent-contract.test.sh + architecture.test.sh,ops/security/tests/agent-contract.test.sh -> TOTAL 15 PASSED 15,,عقد الوكيل مُختبَر نصياً
+P6,ARENA.md,doc,COMPLETE_VERIFIED,PASS,agent-contract.test.sh,ops/security/tests/agent-contract.test.sh -> TOTAL 15 PASSED 15,,مُختبَر
+P5,CONTRIBUTING.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -r 'CONTRIBUTING.md' tests/ ops/verify/ -> no checker,,لا يوجد فحص آلي للمحتوى
+P5,SECURITY.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -r 'SECURITY.md' tests/ ops/verify/ -> no checker,,لا يوجد فحص آلي للمحتوى
+P5,LICENSE,doc,PRESENT_INCOMPLETE,NOT VERIFIED,NONE,cat LICENSE -> 'LICENSE PENDING OWNER DECISION',W13,لا ترخيص فعلي: قرار المالك معلّق، وكل الحقوق محفوظة
+P5,.gitignore,asset,COMPLETE_VERIFIED,PASS,scripts/doctor.sh (Gitignore),./scripts/doctor.sh -> Gitignore VERIFIED,,يتوافق مع فحص الأسرار
+P7,verification-summary.txt,report,COMPLETE_UNVERIFIED,ENVIRONMENT-DEPENDENT,NONE,قياس d349f92 مسجّل داخل الملف؛ لم يُحدَّث عند a71643a,W6,سجل بيئة (ARENA) وليس قياساً حياً؛ يصبح قديماً بصمت مع كل مرحلة
+P5,config/README.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,architecture.test.sh (existence),tests/architecture.test.sh (existence) ; لا فحص لمحتواه,W10,يذكر config/allowed-packages.json كملف مستقبلي غير موجود
+P5,config/allowed-packages.json,asset,NOT_STARTED,NOT STARTED,NONE,test -f config/allowed-packages.json -> absent,W10,مذكور في الوثائق وغير موجود
+P5,docs/vision.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -rl 'vision.md\|security.md\|development.md' scripts/doctor.sh (content) -> no content check,W6,وثيقة مكتملة نصياً بلا أي فحص آلي لمحتواها
+P5,docs/security.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -rl 'vision.md\|security.md\|development.md' scripts/doctor.sh (content) -> no content check,,وثيقة مكتملة نصياً بلا أي فحص آلي لمحتواها
+P5,docs/development.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -rl 'vision.md\|security.md\|development.md' scripts/doctor.sh (content) -> no content check,W6,وثيقة مكتملة نصياً بلا أي فحص آلي لمحتواها
+P8,docs/architecture.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,W6,يحتوي سطر 884 على ادعاء قديم عن REMOTE CI غير مُتحقَّق
+P5,docs/operations.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + agent-contract.test.sh,tests/architecture.test.sh -> 15/15,,مُشار إليه من فحوص
+P6,docs/agent-contract.md,doc,COMPLETE_VERIFIED,PASS,agent-contract.test.sh,ops/security/tests/agent-contract.test.sh -> 15/15,,
+P8,docs/architecture/context.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/container.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/components.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/execution-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/security-boundaries.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/capability-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/event-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/data-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/networking.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي؛ frozen-baseline وnetworking يحملان ادعاءات حالة قديمة
+P8,docs/architecture/extensibility.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/threat-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/roadmap.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي
+P8,docs/architecture/frozen-baseline.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,tests/architecture.test.sh -> 15/15 ; ops/verify/verify-architecture.sh -> 37 PASS,,فحص نصي/وجودي؛ frozen-baseline وnetworking يحملان ادعاءات حالة قديمة
+P8,docs/architecture/adr/0001-linex-os-scope.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P8,docs/architecture/adr/0002-execution-boundary.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P8,docs/architecture/adr/0003-capability-security-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P8,docs/architecture/adr/0004-policy-vs-execution.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P8,docs/architecture/adr/0005-storage-abstraction.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P8,docs/architecture/adr/0006-extensibility-model.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh + verify-architecture.sh,ops/verify/verify-architecture.sh -> 37 PASS / 0 FAIL,,
+P9,docs/architecture/adr/0007-core-runtime-contracts.md,doc,COMPLETE_VERIFIED,PASS,suite الخاص بالمرحلة + verify-*,ops/verify/verify-policy.sh -> 104 PASS / 0 FAIL (مثال),,
+P10,docs/architecture/adr/0008-execution-authority-contract.md,doc,COMPLETE_VERIFIED,PASS,suite الخاص بالمرحلة + verify-*,ops/verify/verify-policy.sh -> 104 PASS / 0 FAIL (مثال),,
+P11,docs/architecture/adr/0009-policy-engine-contract.md,doc,COMPLETE_VERIFIED,PASS,suite الخاص بالمرحلة + verify-*,ops/verify/verify-policy.sh -> 104 PASS / 0 FAIL (مثال),,
+P12,docs/architecture/adr/0010-capability-registry-contract.md,doc,COMPLETE_VERIFIED,PASS,suite الخاص بالمرحلة + verify-*,ops/verify/verify-policy.sh -> 104 PASS / 0 FAIL (مثال),,
+Governance,docs/architecture/adr/0011-baseline-reconciliation-and-phase-numbering.md,doc,COMPLETE_UNVERIFIED,NOT VERIFIED,NONE,grep -rl '0011' tests/ ops/verify/ -> 0 hits (المراجع فقط داخل ci.yml/powershell test),W5,الوثيقة التي تُعرّف سلطة الحالة ومفردات التصنيف غير مفحوصة آلياً؛ محورها self-governance
+P9,docs/contracts/README.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/runtime.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/task.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/action.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/event.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/result.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P9,docs/contracts/lifecycle.md,doc,COMPLETE_VERIFIED,PASS,contracts.test.sh + verify-contracts.sh,tests/contracts.test.sh -> 15/15 ; ops/verify/verify-contracts.sh -> 46 PASS,W4,فحوصات نصية (grep) وليست دلالية
+P10,docs/contracts/execution-authority.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-shell.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-process.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-file.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-network.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-package.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/executor-matrix.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P10,docs/contracts/execution-lifecycle.md,doc,COMPLETE_VERIFIED,PASS,execution-authority.test.sh + verify-execution-authority.sh,tests/execution-authority.test.sh -> 36/36,W4,فحوصات نصية
+P11,docs/contracts/policy.md,doc,COMPLETE_VERIFIED,PASS,policy.test.sh + verify-policy.sh,tests/policy.test.sh -> 40/40 ; verify-policy.sh -> 104 PASS,"W1,W4",سرد السماح في policy.md أقدم من كود البوابة بـ5 حزم
+P11,docs/contracts/policy-matrix.md,doc,COMPLETE_VERIFIED,PASS,policy.test.sh + verify-policy.sh,tests/policy.test.sh -> 40/40 ; verify-policy.sh -> 104 PASS,"W1,W4",سرد السماح في policy.md أقدم من كود البوابة بـ5 حزم
+P11,docs/contracts/policy-lifecycle.md,doc,COMPLETE_VERIFIED,PASS,policy.test.sh + verify-policy.sh,tests/policy.test.sh -> 40/40 ; verify-policy.sh -> 104 PASS,"W1,W4",سرد السماح في policy.md أقدم من كود البوابة بـ5 حزم
+P12,docs/contracts/capability.md,doc,COMPLETE_VERIFIED,PASS,capability.test.sh + verify-capability.sh,tests/capability.test.sh -> 45/45 ; verify-capability.sh -> 87 PASS,W4,فحوصات نصية
+P12,docs/contracts/capability-registry.md,doc,COMPLETE_VERIFIED,PASS,capability.test.sh + verify-capability.sh,tests/capability.test.sh -> 45/45 ; verify-capability.sh -> 87 PASS,W4,فحوصات نصية
+P12,docs/contracts/capability-lifecycle.md,doc,COMPLETE_VERIFIED,PASS,capability.test.sh + verify-capability.sh,tests/capability.test.sh -> 45/45 ; verify-capability.sh -> 87 PASS,W4,فحوصات نصية
+P1,ops/bootstrap/bootstrap.sh,script,COMPLETE_VERIFIED,PASS,doctor.sh + verify-environment.sh + CI Job 4,bash ops/bootstrap/bootstrap.sh -> STATUS PASS,,تشغيل فعلي بلا تغيير نظام
+P1,ops/bootstrap/bootstrap.ps1,script,PRESENT_NOT_EXECUTED,NOT VERIFIED,NONE,command -v pwsh -> MISSING ; grep pwsh في ci.yml -> لا خطوة تحليل نحوي,W3,لم يُنفَّذ ولا يُفحص نحوياً في أي بيئة
+P3,ops/linux/doctor.sh,script,COMPLETE_VERIFIED,PASS,CI Job 4,"bash ops/linux/doctor.sh -> exit 0, STATUS NOT VERIFIED (pkg-config)",,يفشل بصدق عند نقص أداة
+P3,ops/linux/install-base.sh,script,COMPLETE_VERIFIED,PASS (يُعدّل النظام),tests/toolchain.test.sh (نصي) + تشغيل يدوي,bash ops/linux/install-base.sh -> حاول sudo apt-get install -y pkg-config ثم exit 5,W8,الأمر المركّب ينفّذ --execute تلقائياً: الافتراضي الفعلي EXECUTE لا DRY-RUN
+P3,ops/linux/toolchain-manifest.txt,asset,COMPLETE_VERIFIED,PASS,toolchain.test.sh,ops/linux/tests/toolchain.test.sh -> 43/44 (pkg-config),,يصنّف pkg-config كـENVIRONMENT-DEPENDENT بصدق
+P3,ops/linux/tests/toolchain.test.sh,test,COMPLETE_VERIFIED,FAIL (بيئي),نفسه + CI Job 4,bash ops/linux/tests/toolchain.test.sh -> exit 1 ; CI Job 4 (بعد تثبيت مسبق) -> success,W2,الفشل الوحيد: pkg-config MISSING
+P4,ops/powershell/install-pwsh.sh,script,BLOCKED_ENV,BLOCKED,powershell-install.test.sh,ops/powershell/tests/powershell-install.test.sh -> 18/18 PASSED ; curl -I https://packages.microsoft.com -> exit 35,W3,المنطق مُختبَر، والتنزيل محجوب شبكياً؛ السكربت لم يُنفَّذ تنفيذاً كاملاً
+P4,ops/powershell/doctor.ps1,script,PRESENT_NOT_EXECUTED,NOT VERIFIED,NONE,command -v pwsh -> MISSING,W3,غير قابل للتنفيذ هنا
+P4,ops/powershell/tests/powershell-install.test.sh,test,BLOCKED_ENV,PASS (نصي),CI Job 5,bash ops/powershell/tests/powershell-install.test.sh -> TOTAL 18 PASSED 18 FAILED 0,W3,يفحص نص السكربت لا سلوكه الفعلي
+P2,ops/security/privilege-policy.md,doc,COMPLETE_VERIFIED,PASS,privilege-policy.test.sh + policy-check.sh,ops/security/tests/privilege-policy.test.sh -> 28/28 ; ops/security/policy-check.sh -> PASS,W1,سرد الحزم 15/20 مقارنة بكود البوابة
+P2,ops/security/privilege-gate.sh,script,COMPLETE_VERIFIED,PASS,privilege-policy.test.sh (سلوكي),28/28 ; عداها اختبارات عدائية: sudo whoami، rm -rf /، ... -> BLOCKED exit 3,W1,أقوى أصل في المستودع: فحص سلوكي فعلي
+P2,ops/security/forbidden-commands.txt,asset,COMPLETE_VERIFIED,PASS,policy-check.sh,ops/security/policy-check.sh -> PASS,,قائمة دفاع بالعمق (ليست الضابط الأساسي)
+P2,ops/security/policy-check.sh,script,COMPLETE_VERIFIED,PASS,CI Job 2 + doctor,bash ops/security/policy-check.sh -> STATUS PASS exit 0,,
+P7,ops/security/secret-scan.sh,script,COMPLETE_VERIFIED,PASS,CI Job 2 + doctor,bash ops/security/secret-scan.sh -> STATUS PASS exit 0,,يمسح المستودع كاملاً بلا استثناء مجلدات
+P7,ops/security/static-security-check.sh,script,COMPLETE_VERIFIED,PASS,CI Job 2 + doctor,bash ops/security/static-security-check.sh -> STATUS PASS exit 0,W11,فحص eval محصور في ops/ وscripts/ ويعتمد حدّية السطر؛ suites تستخدم eval داخل tests/ (استثناء موثّق)
+P2,ops/security/tests/privilege-policy.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 3,-> TOTAL 28 PASSED 28 FAILED 0 exit 0,,اختبار سلوكي حقيقي بأوامر عدائية
+P6,ops/security/tests/agent-contract.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 5,-> TOTAL 15 PASSED 15 FAILED 0 exit 0,W4,نصي
+P1,ops/verify/verify-environment.sh,script,COMPLETE_VERIFIED,PASS,CI Job 4 + doctor,-> STATUS PASS (with PowerShell NOT VERIFIED expected) exit 0,,
+P1,ops/verify/verify-environment.ps1,script,PRESENT_NOT_EXECUTED,NOT VERIFIED,NONE,command -v pwsh -> MISSING,W3,غير قابل للتنفيذ هنا
+P8,ops/verify/verify-architecture.sh,script,COMPLETE_VERIFIED,PASS,CI + doctor,-> 37 PASS / 0 FAIL exit 0,W4,
+P9,ops/verify/verify-contracts.sh,script,COMPLETE_VERIFIED,PASS,CI + doctor,-> 46 PASS / 0 FAIL exit 0,W4,
+P10,ops/verify/verify-execution-authority.sh,script,COMPLETE_VERIFIED,PASS,CI + doctor,-> 67 PASS / 0 FAIL exit 0,W4,
+P11,ops/verify/verify-policy.sh,script,COMPLETE_VERIFIED,PASS,CI + doctor,-> 104 PASS / 0 FAIL exit 0,"W1,W4",لا يتحقق من تطابق سرد الوثيقة مع كود البوابة
+P12,ops/verify/verify-capability.sh,script,COMPLETE_VERIFIED,PASS,CI + doctor,-> 87 PASS / 0 FAIL exit 0,W4,
+P1,scripts/doctor.sh,script,COMPLETE_VERIFIED,FAIL (صادق),CI Job 6 + تشغيل محلي,"./scripts/doctor.sh -> Counts PASS=45 FAIL=1 BLOCKED=2 NOT_VERIFIED=1, exit 3",W9,المخرج ليس متطابقاً بايت-ببايت بين تشغيلين: سطر Disk يتغير
+P1,scripts/doctor.ps1,script,PRESENT_NOT_EXECUTED,NOT VERIFIED,NONE,command -v pwsh -> MISSING,W3,مرآة PowerShell للمُجمّع
+P8,tests/architecture.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 6,-> TOTAL 15 PASSED 15 exit 0,W4,12/14 فحصاً نصي بحت
+P9,tests/contracts.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 6,-> TOTAL 15 PASSED 15 exit 0,W4,14/15 نصي
+P10,tests/execution-authority.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 6,-> TOTAL 36 PASSED 36 exit 0,W4,33/36 نصي
+P11,tests/policy.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 6,-> TOTAL 40 PASSED 40 exit 0,W4,39/40 نصي
+P12,tests/capability.test.sh,test,COMPLETE_VERIFIED,PASS,CI Job 6,-> TOTAL 45 PASSED 45 exit 0,W4,43/45 نصي
+P5,tests/README.md,doc,COMPLETE_VERIFIED,PASS,architecture.test.sh (existence),tests/architecture.test.sh -> 15/15,,
+CI,.github/workflows/ci.yml,workflow,COMPLETE_VERIFIED,PASS,GitHub Actions,gh run view 37246010719 --json conclusion -> success (a71643a),"W2,W5",6 وظائف؛ Job 4 يثبّت الأساس بحزمة apt مباشرة خارج البوابة (CI-H4)
+CI,.github/workflows/ci-debug.yml,workflow,PRESENT_NOT_EXECUTED,NOT VERIFIED,workflow_dispatch فقط,gh run list -> لا تشغيل مسجّل لـCI Debug,W12,أداة طوارئ لجمع الأدلة؛ لم تُشغَّل بعد
+P13,docs/contracts/agent*.md,doc,NOT_STARTED,NOT STARTED,-,ls docs/contracts/agent*.md -> لا وجود,,المرحلة التالية: عقد وقت تشغيل الوكيل
+P14,docs/contracts/tool*.md + skill*.md,doc,NOT_STARTED,NOT STARTED,-,ls -> لا وجود,,مؤجّلة بالتصميم حتى P18
+P15,docs/contracts/memory*/state*/event-store*,doc,NOT_STARTED,NOT STARTED,-,ls -> لا وجود,,
+P16,docs/contracts/verification*.md,doc,NOT_STARTED,NOT STARTED,-,ls -> لا وجود,,
+P17,docs/contracts/mcp*.md,doc,NOT_STARTED,NOT STARTED,-,ls -> لا وجود,,
+P18,ADR لاختيار التقنية,doc,NOT_STARTED,NOT STARTED,-,ls docs/architecture/adr/001[2-9]* -> لا وجود,,هنا يُختار لغة التنفيذ؛ لا كود منتج قبلها
+Impl,كود المنتج (0 ملفات),code,NOT_STARTED,NOT STARTED,-,find . -name '*.py' -o -name '*.c' -o -name '*.ts' -o -name '*.go' -o -name '*.rs' -o -name '*.js' -> 0,,صفر أسطر كود منتج — قرار معلن ومقصود حتى P18
+Retired,"P14 Control Plane MVP (control/, digest CLI, 181 pytest, bundle)",retired,RETIRED,RETIRED,ADR 0011 D1/D4,gh pr list --state all -> لا PR بهذا المحتوى؛ لا ملفات في المستودع,W5,تسمية متقاعدة؛ لا أثر لها محلياً أو على GitHub
+P7,docs/reports/README.md,doc,COMPLETE_VERIFIED,PASS,secret-scan.sh (R5) + ci.yml Job 2,grep -rn 'docs/reports' .github/workflows/ci.yml -> سطر معلوماتي واحد؛ لا فحص للمحتوى,,اتفاقية الأدلة R1-R6: إلزامية لكل تقرير جديد
+P7,docs/reports/baseline-audit-d349f92.md,report,COMPLETE_UNVERIFIED,ENVIRONMENT-DEPENDENT,NONE,ls docs/reports/ -> ملف قائم؛ لا فحص آلي لمحتواه,W6,قياس بيئة ARENA عند d349f92؛ يُستشهد به كسلطة قياس وهو لقطة زمنية
