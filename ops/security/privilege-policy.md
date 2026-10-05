@@ -147,6 +147,51 @@ Future phases may extend list via policy change with justification.
 
 For testing in P2, we use these known packages only in dry-run mode, no real install.
 
+### 5.1 P3 build and CI baseline extension (W2)
+
+The current Gate also permits the existing P3 build packages below and, for W2,
+adds **only `python3`**. The effective package allowlist is the P2 list above plus:
+
+```text
+- gcc
+- g++
+- make
+- pkg-config
+- build-essential
+- python3
+```
+
+The build packages were already permitted by the Gate for the P3 C/C++ smoke tests.
+This section records that existing extension rather than authorizing new build tools.
+
+Justification for the W2 addition:
+
+- **WHY / REQUIRED_FOR:** `python3` is already `Required=yes` in the P3 manifest
+  and in CI's existing package set. Without this entry CI cannot provision that
+  declared prerequisite through the Gate.
+- **SOURCE / VERSION:** the official distribution package from the supported
+  runner's configured Debian/Ubuntu repositories. The distribution selects the
+  version; this does not pin or select a product runtime.
+- **LICENSE:** Python Software Foundation License (distribution packaging notices
+  also apply).
+- **RISK:** installing a package is privileged; the Gate's validation, dry-run,
+  explicit `--execute`, and fail-closed rules remain mandatory. The shared Gate
+  allowlist also permits the existing `package-remove` action for this package;
+  no CI removal is introduced.
+- **ALTERNATIVES:** direct CI installation is rejected (W2); silently dropping a
+  required P3 prerequisite would weaken verification. `nodejs` and `npm` are not
+  added by this scoped change.
+
+Both `.github/workflows/ci.yml` and `ci-debug.yml` use
+`ops/ci/provision-toolchain.sh`. It defaults to dry-run, preflights the fixed
+profile through the Gate before any installation, then requires `--execute` for
+Gate-mediated index refresh and individual missing-package installs. Missing
+policy, refusal, failed installation, or an unmet postcondition stops the workflow;
+there is no direct-install fallback or CI exception. The debug profile is limited
+to its existing `pkg-config`, `zip`, and `unzip` prerequisites.
+
+This is repository/CI tooling, not a P18 implementation-language decision.
+
 ## 6. Forbidden Commands
 
 See ops/security/forbidden-commands.txt

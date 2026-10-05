@@ -52,6 +52,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: CI provisioning regression tests (W2)
+        run: |
+          bash tests/ci-provisioning.test.sh
+
       - name: Runner facts (read-only)
         run: |
           set -eo pipefail
@@ -62,6 +66,10 @@ jobs:
             echo "pwsh -Command smoke: $(pwsh -NoLogo -NoProfile -Command '"LINEX.OS POWERSHELL SMOKE PASS"' 2>&1)"
           fi
           echo "target from input: ${{ inputs.target }}"
+
+      - name: Ensure debug toolchain baseline through Gate (W2)
+        run: |
+          bash ops/ci/provision-toolchain.sh debug --execute
 
       - name: Run target script with trace
         run: |
@@ -74,11 +82,6 @@ jobs:
             exit 1
           fi
           chmod +x "$TARGET"
-          # Make sure the P3 baseline is present so the trace is not polluted by
-          # an unrelated missing tool (same reasoning as ci.yml Job 4).
-          for t in pkg-config zip unzip; do
-            command -v "$t" >/dev/null 2>&1 || sudo apt-get install -y --no-install-recommends "$t" >/dev/null
-          done
           # shellcheck disable=SC2086
           if [ "$TRACE" = "true" ]; then
             set +e
