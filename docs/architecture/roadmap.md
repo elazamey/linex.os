@@ -1,11 +1,60 @@
 # LINEX.OS — Roadmap
 
-Phase ledger reconciled to merged git state at `d349f92` per ADR 0011 (D4). Status values
-follow ADR 0011 (D2): `COMPLETE` means the phase's documents exist, are self-consistent and are
-machine-checked by a shipped suite that passes — it never means "implemented". Measurements are
-re-derivable via `docs/reports/baseline-audit-d349f92.md`.
+## Active Delivery Plan (approved P0–P6 sequence)
 
-## Foundation (P1-P7) — COMPLETE
+This P0–P6 sequence is the active execution plan for the current work. The P1–P18 labels and
+associated ledger below are retained as historical identifiers for existing artifacts; they do not
+silently redefine the active sequence. ADR 0011 (D4/D5) is preserved unchanged as the accepted
+pre-P0 decision record. P1 must explicitly reconcile or reaffirm any affected earlier ADR decisions
+before P2 Runtime Core work; no Runtime implementation may begin before the required P1 ADRs are
+accepted.
+
+| Phase | Scope | Gate / position |
+|---|---|---|
+| P0 | Baseline Reconciliation | COMPLETE: reconciled live documentation, recorded separate repository/environment/remote-CI results, validated, and opened PR #4. |
+| P1 | MVP Definition + ADRs | Next: establish MVP boundaries and decide language, storage, isolation boundary, execution model, evidence model, and failure semantics through ADRs. |
+| P2 | P9 Runtime Core | After P1 ADR decisions are accepted; use legacy P9 contracts as inputs and keep implementation within the approved scope. |
+| P3 | P11/P12 Policy + Capability | After P2; reconcile and deliver policy/capability behavior under fail-closed rules. |
+| P4 | P10 Execution Authority | After P3; execution authority remains policy-bound and scoped. |
+| P5 | P13/P14 Vertical Slice | After P4; bounded end-to-end slice, not general product completeness. |
+| P6 | CI + Security + Release | After P5; harden verification and release controls. |
+
+**P1 MVP scope proposal (not frozen):** Linux, CLI, local process; Planner → structured actions;
+Mock Authority first, then Safe Local Authority; fail-closed policy; explicit, scoped, expiring
+capabilities; append-only execution evidence; no Agent → shell path. MCP, browser, GUI, default
+network, and production deployment are outside this proposal. P1 may accept, refine, or reject it
+through ADRs; do not describe it as an established architecture before then.
+
+The original phase-ledger reconciliation at `d349f92` remains preserved in
+`docs/reports/baseline-audit-d349f92.md`; the P0 baseline was remeasured at `a71643a` in
+`docs/reports/baseline-audit-a71643a.md`. Historical `COMPLETE` follows ADR 0011 (D2): the
+phase's documents existed, were self-consistent, and were machine-checked by a shipped suite that
+passed. It never meant "implemented".
+
+## Latest Baseline Measurement (`a71643a`)
+
+- **REPOSITORY_STATUS: PASS.** Existing foundation and contract artifacts (original P1-P12 labels)
+  are present; repository security and contract verifiers pass. The default Arena PATH produces
+  255/256 across the nine shipped suites because the legacy P3 test correctly detects the missing
+  required `pkg-config` tool. With the audit-only temporary source build on PATH, the suites are
+  256/256. The default test failure is attributed to the environment, not hidden or recast as a
+  repository PASS.
+- **ENVIRONMENT_STATUS: BLOCKED.** `pkg-config` is missing from the default PATH and the approved
+  Debian package mirror is blocked. The official pinned pkgconf source build under `/tmp` was for
+  verification only, not a system install or persistent fix. `scripts/doctor.sh` remains fail-closed
+  and exits 3 on the default PATH (ADR 0011 D3). P4 PowerShell remains network-blocked.
+- **REMOTE_CI_STATUS: VERIFIED.** GitHub Actions run `37246010719` on `main`, head `a71643a`,
+  succeeded in all six jobs. Runner log bodies remain unavailable from Arena; conclusions are
+  verified at job granularity.
+- **Active phase position:** P0 Baseline Reconciliation is complete (PR #4 open); P1 MVP Definition
+  + ADRs is next. Legacy P9-P12 contracts are inputs, not the current phase sequence. P1 must
+  establish the required architecture decisions before any Runtime implementation.
+
+The full commit-scoped evidence and the separate REPOSITORY / ENVIRONMENT / REMOTE CI assessment
+are in `docs/reports/baseline-audit-a71643a.md`. This snapshot does not replace the historical
+`d349f92` report or turn environment-dependent P3 into a persistent PASS.
+
+## Legacy Foundation Inventory (original P1–P7 labels; historical status preserved)
 
 ```
 P1 ✅ COMPLETE — Environment Discovery, Bootstrap Foundation (read-only, fail-closed)
@@ -40,13 +89,14 @@ Job 6 doctor P7). Verified at job-conclusion granularity only: runner log bodies
 RETRIEVABLE from Arena (results-receiver.actions.githubusercontent.com → EOF), so any claim
 about log contents stays NOT VERIFIED (ADR 0011 D7).
 The earlier "REMOTE CI: NOT VERIFIED — branch not pushed, main at 768bf39" statement described
-the P7/P8 no-push policy of that time and is superseded: PR #1 and PR #2 were both pushed and
-merged.
+the P7/P8 no-push policy of that time and is superseded. PR #1 and PR #2 were pushed and merged
+before the `d349f92` measurement; PR #3 later merged the P0 baseline reconciliation whose merge
+commit is `a71643a` (see the latest measurement section above).
 
 FOUNDATION = VERIFIED locally, with one ENVIRONMENT-DEPENDENT gap (P3 pkg-config)
 ```
 
-## Architecture (P8) — COMPLETE
+## Legacy Architecture Inventory (original P8 label; historical status preserved)
 
 ```
 P8 ✅ COMPLETE — Architecture Design ONLY (this phase)
@@ -69,7 +119,7 @@ P8 ✅ COMPLETE — Architecture Design ONLY (this phase)
   - Memory architecture: Ephemeral Context, Session, Project, User, System with ownership, retention, access policy, encryption, deletion
   - Artifact model: Source, Build, Execution, Evidence, User with owner, scope, hash, provenance, retention
   - Storage abstraction: State Store, Event Store, Memory Store, Artifact Store, Evidence Store interfaces, local/optional remote/replaceable, no vendor chosen, vendor-neutral, free-first
-  - Network architecture: Inbound/Outbound/Internal/External, Trusted/Restricted/Untrusted zones, no Agent→Internet unrestricted without capability+policy, current Arena network PASS/BLOCKED documented
+  - Network architecture: Inbound/Outbound/Internal/External, Trusted/Restricted/Untrusted zones, no Agent→Internet unrestricted without capability+policy; Arena network evidence is recorded as a measured snapshot, not a timeless claim
   - Identity: User, Agent, Service, Tool, MCP Server, Execution Authority separate identity/context
   - Observability: Logs (DEBUG), Metrics, Traces, Events, Audit, Evidence (VERIFICATION), distinguish, no secrets, no mixing
   - Failure model: Policy, Authorization, Validation, Execution, Network, Dependency, Resource, Verification failures, each not auto success, fail-closed
@@ -95,7 +145,7 @@ P8 ✅ COMPLETE — Architecture Design ONLY (this phase)
     subsequently pushed and merged, and remote CI is now VERIFIED at d349f92 (see Foundation)
 ```
 
-## Contract Phases (P9-P12) — COMPLETE
+## Legacy Contract Inventory (original P9–P12 labels; historical status preserved)
 
 Contracts only. No implementation language was chosen and no product code exists, per the P8
 freeze and ADR 0009 (`DECISION PENDING` until Technology Selection). Every `COMPLETE` below
@@ -139,11 +189,13 @@ CI-H1…CI-H6 ✅ COMPLETE — CI hardening (NOT a phase; formerly mislabelled "
       Evidence: CI run 37233042304 on main → 6/6 jobs success
 ```
 
-## Phase Sequence (P13 onward) — AUTHORITATIVE
+## Legacy Phase Sequence (P13 onward; historical authority)
 
-Authority: ADR 0011 (D4), which adopts the sequence recorded in the `ACCEPTED` ADRs
-0007 → 0010 and `docs/contracts/README.md`, because that is the sequence P9-P12 actually
-executed. Where the P8-era sketch below differed, the ADR sequence prevails.
+This section preserves the sequence ADR 0011 (D4) made authoritative before the current P0–P6
+plan. It records the old P13–P18 backlog and accepted contract sequence for provenance; it is not
+the active delivery order. The active sequence is at the top of this roadmap. P1 must explicitly
+reconcile or reaffirm any affected decisions via ADR before P2 work; do not silently rewrite ADR
+0011, the accepted ADRs 0007–0010, or their historical phase labels.
 
 ```
 P13 ▶ NEXT — Agent Runtime Contract (CONTRACTS ONLY, no implementation)
@@ -228,46 +280,51 @@ Security Hardening (sandbox Level 1-4,
                            not phase P13; P13 is Agent Runtime Contract.
 ```
 
-### Implementation Gate (unchanged)
+### Historical Implementation Gate (ADR 0011 D5)
 
-```
-Final: Product Code, Apps, etc. only after Core Runtime, Policy, Capability, Agent Runtime,
-Tool/Skill, Memory/State/Event, Verification, MCP contracts PASS and Technology Selection
-(P18) has decided the implementation language via ADR.
-```
+The pre-P0 gate required all listed contract phases and Technology Selection at legacy P18. That
+decision is preserved in ADR 0011 and is not silently edited here. Under the active P0–P6 plan,
+Runtime implementation remains prohibited until P1 has accepted ADR decisions for language,
+storage, isolation boundary, execution model, evidence model, and failure semantics. P1 must
+explicitly document whether it amends, supersedes, or reaffirms ADR 0011 D5 and related freeze
+language before P2 work begins.
 
-## Sandboxing Roadmap (from P8)
+## Historical Sandboxing Roadmap (legacy P8 sketch; review in P1)
 
-- Level 0: Project Gate (current, P2) — allowlist + structured actions + dry-run + evidence, no kernel sandbox, governance layer
-- Level 1: Dedicated unprivileged process — Execution Authority in separate unprivileged process, not NOPASSWD:ALL
-- Level 2: Filesystem isolation — chroot or mount namespace, workspace only
-- Level 3: Network isolation — network namespace, allowlist domains only
-- Level 4: Container / sandbox — Docker/Podman with resource limits, no privileged
-- Level 5: VM / stronger isolation — VM/microVM for high-risk
-- Level 6: Optional deeper OS integration — custom OS layer, modular
+- Level 0: Existing Project Gate (legacy P2) — allowlist + structured actions + dry-run + evidence; governance layer, not a kernel sandbox
+- Level 1: Dedicated unprivileged process
+- Level 2: Filesystem isolation
+- Level 3: Network isolation
+- Level 4: Container / sandbox
+- Level 5: VM / stronger isolation
+- Level 6: Optional deeper OS integration
 
-No implementation in P8, only roadmap.
+These are prior design possibilities, not committed MVP requirements or technology decisions. P1 must
+establish the MVP isolation boundary; no sandbox implementation is authorized by this historical
+sketch.
 
-## Architecture Freeze
+## Historical Architecture Freeze (legacy P8)
 
-- At end of P8, `frozen-baseline.md` contains Architectural Decisions, Non-goals, Interfaces, Trust Boundaries, Security Invariants, Open Decisions, Deferred Decisions
-- Freeze means: No implementation should violate documented baseline without an ADR
-- Architecture not immutable, but changes require ADR
+`frozen-baseline.md` and the P8 freeze record remain preserved historical inputs. The active P1
+MVP ADRs must explicitly review and reconcile them where needed. The proposed P1 MVP scope above is
+not a frozen architecture, and old freeze language must not bypass the required P1 decisions.
 
-## Open Decisions (DECISION PENDING)
+## P1 ADR Decisions (pending; no Runtime implementation before acceptance)
 
-- Programming Language: criteria portability, security, performance, ecosystem, team familiarity
-- Runtime implementation technology: criteria isolation, resource limits, portability, complexity
-- Database: criteria local-first, replaceable, free-first, vendor-neutral
-- Event bus: criteria local-first, replaceable, no mandatory cloud
-- Sandbox: criteria security, complexity, resource usage, portability
-- UI framework: criteria free-first, self-hostable, no mandatory SaaS
-- API framework: criteria vendor-neutral, local-capable
-- Browser engine: criteria isolation, resource limits, free-first
-- MCP transport: criteria security, portability
-- Deployment topology: criteria self-hostable, local-capable, cloud-compatible, low-resource mode
+Required decision areas:
 
-No technologies chosen merely to fill gap.
+- **Language:** implementation language and relevant portability, security, performance, ecosystem, and maintenance criteria
+- **Storage:** local-first data/evidence storage and replacement/migration boundary
+- **Isolation boundary:** local process and filesystem/network/resource limits appropriate to the MVP
+- **Execution model:** CLI/local process flow, Planner → structured action, Mock Authority first, then Safe Local Authority
+- **Evidence model:** append-only execution evidence, provenance, verification, and retention semantics
+- **Failure semantics:** fail-closed policy, timeouts, denial, partial execution, cancellation, and unverified outcomes
+
+P1 must record the proposed MVP scope as a proposal and accept, refine, or reject it through ADRs.
+MCP, browser, GUI, default network, and production deployment remain outside the proposal unless P1
+explicitly changes scope. Additional decisions (UI/API frameworks, MCP transport, browser engine,
+event bus, deployment topology, deeper sandbox levels) stay deferred unless needed for an accepted
+MVP decision. No technologies are chosen merely to fill a gap.
 
 ## References
 
@@ -285,8 +342,8 @@ No technologies chosen merely to fill gap.
 - frozen-baseline.md (freeze)
 - ADRs 0001-0006 (P8 architecture decisions)
 - ADRs 0007-0010 (P9-P12 contract phases, the sequence D4 adopts)
-- adr/0011-baseline-reconciliation-and-phase-numbering.md (status authority, evidence rules,
-  phase numbering authority, retired labels — the reason this ledger reads the way it does)
+- adr/0011-baseline-reconciliation-and-phase-numbering.md (status/evidence rules and the historical
+  pre-P0 phase numbering; P1 must explicitly reconcile affected decisions via ADR)
 - docs/reports/README.md (evidence report convention R1-R6)
 - docs/reports/baseline-audit-d349f92.md (the measurements behind every status above)
 - AGENTS.md, ARENA.md, docs/security.md, privilege-policy.md, agent-contract.md

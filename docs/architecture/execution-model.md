@@ -87,8 +87,8 @@ Agent must not jump PLAN→EXECUTE without DRY-RUN.
 - project: broader project including config, but not host
 - user: user home, not system
 - host: host OS, /etc, /usr, etc. — requires explicit host capability + policy, even if SYSTEM_SUDO_POLICY is NOPASSWD:ALL, PROJECT_POLICY does NOT allow same
-- network: outbound network, specific domains (github.com PASS, packages.microsoft.com BLOCKED in Arena)
-- production: production DB, production APIs, cloud production — requires production auth + production evidence, forbidden in P0-P7
+- network: outbound network, specific domains; no default network in the P1 MVP proposal (final policy requires P1 ADRs)
+- production: production DB, production APIs, cloud production — outside the P1 MVP proposal; any future use requires separate production authorization + production evidence
 
 Agent does not get host scope merely by getting workspace scope. Capability elevation explicit via Policy Engine.
 

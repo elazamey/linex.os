@@ -1,6 +1,11 @@
-# LINEX.OS — Architecture (P8)
+# LINEX.OS — Architecture (legacy P8 design record)
 
 > **Architecture Design — AI-native Execution Operating Environment above Linux, with roadmap to deeper OS integration.**
+>
+> This document and its P8 labels are preserved historical architecture inputs, not the active
+> P0–P6 delivery sequence or an automatically frozen MVP. P1 MVP Definition + ADRs must review
+> and explicitly reconcile this design through ADRs. The proposed Linux CLI/local-process MVP is
+> not frozen; no Runtime implementation before P1 decisions are accepted.
 
 ## 0. Absolute Scope — P8
 
@@ -305,7 +310,7 @@ Scopes:
 - user: user home, but not system
 - host: host OS, /etc, /usr, etc. (requires explicit host capability + policy)
 - network: outbound network, specific domains (github.com PASS, packages.microsoft.com BLOCKED in Arena)
-- production: production databases, production APIs, cloud production (requires production auth + production evidence, forbidden in P0-P7)
+- production: production databases, production APIs, cloud production (requires separate production authorization + production evidence; outside the proposed MVP and not authorized by this design record)
 
 Agent does not get host scope merely by getting workspace scope. Capability elevation must be explicit via Policy Engine + Authorization.
 
@@ -403,7 +408,7 @@ Because P2 is not kernel sandbox, roadmap:
 - Level 5: VM / stronger isolation — VM or microVM for high-risk capabilities
 - Level 6: Optional deeper OS integration — custom OS layer, deeper control, but still modular
 
-No implementation of these levels in P8, only roadmap. Current P2 is Level 0.
+No implementation of these levels was in the legacy P8 scope; this is a design sketch only. The Project Gate was delivered under the legacy P2 label and is not an assertion that active P2 is the gate.
 
 ## 16. Policy Engine
 
@@ -546,7 +551,7 @@ Zones:
 
 No Agent → Internet unrestricted without CAP_NETWORK_CONNECT + Policy.
 
-Current Arena: github.com PASS, api.github.com PASS, packages.microsoft.com BLOCKED, release-assets.githubusercontent.com BLOCKED, deb.debian.org BLOCKED — documented as known limitations, not design failure.
+P0 Arena snapshot at `a71643a` (recheck live before treating as current): `github.com` and `api.github.com` PASS; `packages.microsoft.com`, `release-assets.githubusercontent.com`, and `deb.debian.org` BLOCKED. `pkg-config` is missing from the default PATH, and the fail-closed doctor exits 3; see `docs/reports/baseline-audit-a71643a.md`. These are environment constraints, not design invariants.
 
 ## 23. Identity
 
@@ -879,9 +884,9 @@ Reviewed `ops/security/static-security-check.sh`:
 
 Preserved: P4 = BLOCKED, no attempt to install PowerShell in P8.
 
-## 46. Remote CI
+## 46. Remote CI Evidence
 
-No commit, push, merge. Status: REMOTE CI = NOT VERIFIED — branch arena/01a107fc-linex-os not pushed, main still at 768bf39, per P7/P8 spec no push.
+Remote CI status is not an architectural invariant and must not be hard-coded as a live claim here. Verify it for the measured commit with `gh run view` and record the run ID, head SHA, and job conclusions in a commit-scoped report under `docs/reports/`. Historical branch/commit values in the P8 snapshot are not current session state.
 
 ## 47. System Changes
 
@@ -915,6 +920,6 @@ P8 repository-only, no apt, sudo, systemctl, user/group, firewall, disk, boot, P
 
 ---
 
-**Status:** P8 Architecture Design — context, container, components, execution-model, security-boundaries, capability-model, event-model, data-model, networking, extensibility, threat-model, roadmap, ADRs, frozen-baseline, tests, verification.
+**Status:** This is the legacy P8 architecture design record. It is retained as historical input, not treated as a frozen MVP; P1 ADRs must review and reconcile it. This document contains no Runtime implementation; current repository, environment, and remote-CI evidence is in commit-scoped reports.
 
-**Next:** P9 Core Runtime Contract (interfaces before implementation)
+**Next:** P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.

@@ -43,6 +43,16 @@ distinction (`ARENA_*` vs `REMOTE_CI_*`) rather than a single unqualified verdic
 A result whose truth depends on state **outside** the repository (an installed package, a
 built binary, a downloaded tool) is `ENVIRONMENT-DEPENDENT`, never `VERIFIED`. See ADR 0011.
 
+Baseline reconciliation reports must keep these status dimensions distinct:
+
+- `REPOSITORY_STATUS`: `PASS` or `FAIL` for repository-owned checks.
+- `ENVIRONMENT_STATUS`: `READY` or `BLOCKED` for the measured execution environment.
+- `REMOTE_CI_STATUS`: `VERIFIED` or `NOT VERIFIED` based on remote job-level evidence.
+
+These labels do not rewrite a tool's actual result: for example, an environment may be BLOCKED
+while `scripts/doctor.sh` correctly reports FAIL / exit 3 for a missing required tool. Preserve the
+failure and explain its environment cause in the evidence.
+
 ### R4 — Classify with the project vocabulary
 
 `PASS` · `FAIL` · `BLOCKED` · `NOT VERIFIED` · `ENVIRONMENT-DEPENDENT`

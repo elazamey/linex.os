@@ -146,8 +146,8 @@ Evidence Store / Audit
 - project: broader project including config/ non-sensitive, but not host, DRY_RUN for risk
 - user: user home, not system, EXPLICIT_APPROVAL for write
 - host: host OS, /etc, /usr, etc., EXPLICIT_APPROVAL very strong auth, even if SYSTEM_SUDO_POLICY NOPASSWD:ALL, PROJECT_POLICY DENY for arbitrary sudo
-- network: outbound network, specific domains, AUTO for official allowlisted, EXPLICIT for unrestricted
-- production: production DB, production APIs, cloud production, EXPLICIT_APPROVAL + production auth + production evidence, forbidden in P0-P7
+- network: outbound network, specific domains; no default network in the P1 MVP proposal, with any allowance to be decided through scoped ADR/policy
+- production: production DB, production APIs, cloud production; outside the P1 MVP proposal and requires separate production authorization + production evidence
 
 Agent does not get host scope merely by getting workspace scope. Capability elevation explicit.
 

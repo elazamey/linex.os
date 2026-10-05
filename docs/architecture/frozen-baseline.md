@@ -9,6 +9,8 @@ Branch: arena/01a107fc-linex-os
 Commit: 768bf39
 Foundation: P1-P7 PASS WITH KNOWN BLOCKER P4, Remote CI NOT VERIFIED (branch not pushed)
 
+> The branch, commit, and remote-CI values above and below are historical provenance for the P8 freeze snapshot only. They do not describe the active session or current remote state; use `docs/reports/` for later measurements.
+
 ## Architectural Decisions — ACCEPTED
 
 ### ADR 0001 — LINEX.OS Scope

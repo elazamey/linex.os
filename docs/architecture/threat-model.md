@@ -254,7 +254,7 @@ No claim of mitigations not existing. Document current mitigations (P1-P7) and f
 - Boundary: Agent → Network Service → External
 - Mitigation (current P3-P7):
   - Network Service with CAP_NETWORK_READ/ CONNECT, allowlist official sources only, network state AVAILABLE/PARTIALLY/BLOCKED, no auto redirect to random mirror/undocumented proxy/third-party/untrusted binary
-  - Current Arena: github.com PASS, packages.microsoft.com BLOCKED, release-assets BLOCKED, deb.debian.org BLOCKED — documented as known limitations, not design failure
+  - P0 Arena snapshot at `a71643a` (recheck live): `github.com` and `api.github.com` PASS; `packages.microsoft.com`, `release-assets.githubusercontent.com`, and `deb.debian.org` BLOCKED. The default PATH also lacks `pkg-config`, so doctor exits 3; see `docs/reports/baseline-audit-a71643a.md`. These are environment limitations, not design failure.
   - CI must not fail due to network unless essential, no ping 8.8.8.8 as requirement
   - P4 blocker: no third-party PowerShell source, official only
 - Mitigation (future):

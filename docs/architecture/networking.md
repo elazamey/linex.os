@@ -46,7 +46,7 @@ Host OS (Trusted but not modified)
 Hardware
 ```
 
-## Current Arena Network Status (P3/P4 Evidence)
+## Arena Network Snapshot (P0 Audit at `a71643a`; Recheck Live)
 
 - github.com → PASS (HTTP/2 200 via E2B proxy O=E2B CN=github.com)
 - api.github.com → PASS (HTTP/2 200, returns v7.6.6)
@@ -68,17 +68,17 @@ Any other source → BLOCKED.
 
 For Debian toolchain (P3):
 
-- Official Debian mirrors BLOCKED in Arena, workaround via git clone https://github.com/pkgconf/pkgconf.git → PASS (github.com allowed), built pkgconf-lite → pkg-config VERIFIED (documented as workaround, not ideal Debian package)
+- Debian mirrors are BLOCKED in Arena. The official `pkgconf/pkgconf` source is reachable; during the P0 audit, commit `d908d63634c13b9a4f88d2fe4578d95048a6b13c` was built as a temporary `pkgconf-lite` 3.0.0 under `/tmp` for verification only. No system package was installed and the default PATH still lacks `pkg-config`; see `docs/reports/baseline-audit-a71643a.md`.
 
 ## Network Policy
 
 - NETWORK_AVAILABLE: github.com PASS
-- NETWORK_PARTIALLY_AVAILABLE: Some PASS, some BLOCKED (current Arena)
+- NETWORK_PARTIALLY_AVAILABLE: Some PASS, some BLOCKED (the P0 audit snapshot is recorded above; recheck live)
 - NETWORK_BLOCKED: All or critical BLOCKED
 - No auto redirect to random mirror, undocumented proxy, third-party download, untrusted binary
 - When BLOCKED → BLOCKED with evidence (curl -v output showing SSL_ERROR_SYSCALL or Empty reply), then mention official alternatives only
-- For P3: Debian apt mirrors BLOCKED → workaround via git clone (github.com allowed) documented
-- For P4: Both Microsoft repo and GitHub .deb fallback BLOCKED due to release-assets and packages.microsoft.com blocked → RESULT BLOCKED per spec, no third-party, no snap, no build from source, no unofficial mirror — requires network allowlist or manual .deb provision
+- P3 audit result: `pkg-config` is missing from the default PATH, P3 is 43/44, and `scripts/doctor.sh` exits 3. A pinned official `pkgconf/pkgconf` build under `/tmp` was used for verification only; it did not install a system package or repair the default PATH. See `docs/reports/baseline-audit-a71643a.md`.
+- P4 audit result: both official PowerShell download paths were BLOCKED by the measured network restrictions → RESULT BLOCKED, no third-party, no snap, no source build, no unofficial mirror. Recheck the network before treating this as current.
 
 ## Capability Mapping for Network
 

@@ -36,9 +36,9 @@
 **Repository:**
 
 - `elazamey/linex.os` at `/home/user/linex.os`
-- Current branch `arena/01a107fc-linex-os` branched from `main` at `768bf39` — Arena tracks this session by this branch, work on any other branch will not be associated
-- Always work on `arena/01a107fc-linex-os`: commit to it, push only to it, open PR from it
-- Never switch to, create, or push to any other branch
+- Arena supplies the active session branch; discover it with `git branch --show-current` instead of hard-coding a branch or base commit here.
+- Work only on the active session branch. Commit, push, or open a PR only when explicitly authorized, and only from that branch; never switch to, create, or push another branch.
+- Branch names and commit IDs in accepted ADRs, reports, and frozen snapshots are historical evidence, not current session configuration.
 
 **Home:**
 
@@ -54,9 +54,9 @@
 - `config/` (non-sensitive config only, no secrets)
 - `tests/` (test levels documentation)
 - `scripts/` (doctor aggregators)
-- `.github/workflows/` (CI, static validation only)
+- `.github/workflows/` (CI repository/security validation, tests, contracts, and doctor; no deployment)
 
-**Forbidden paths for changes (P1-P6):**
+**Forbidden system paths for changes (all phases, including P0-P6):**
 
 - `/etc/sudoers`, `/etc/sudoers.d/*`, `/etc/passwd`, `/etc/group`, `/etc/shadow` — never modify
 - `/etc/apt/sources.list`, `/etc/apt/sources.list.d/*` — don't modify automatically (only via Gate register-microsoft-repository with official Microsoft prod deb, and only if network allows)
@@ -66,10 +66,12 @@
 - Runtime logs, compiled temporary artifacts inside repo — must be outside or deleted after smoke tests
 - No credential files inside repo
 
-**Product Code:**
+**Product / Runtime Gate:**
 
-- No product code in P0-P6 — only foundation
-- No application framework (React, Next, Python, Rust, Go, Java, .NET) chosen yet — architecture decision comes after foundation (P8)
+- P0 is documentation-only baseline reconciliation; P1 is MVP definition + ADRs, with no Runtime implementation.
+- No Runtime implementation before P1 has accepted ADR decisions for language, storage, isolation boundary, execution model, evidence model, and failure semantics. P2+ work remains within the approved scope and active roadmap.
+- The proposed MVP is not frozen: Linux CLI/local process; Planner → structured actions; Mock Authority first, then Safe Local Authority; fail-closed policy; explicit/scoped/expiring capabilities; append-only evidence; no Agent → shell. MCP, browser, GUI, default network, and production deployment are outside the proposal.
+- Framework or implementation-language choices must be made through P1 ADRs, not assumed from the legacy P8/P18 numbering.
 
 ## 4. Command Rules
 
@@ -135,7 +137,7 @@ Evidence (ACTION, CLASS, POLICY, DECISION, EXECUTION, EXIT_CODE, TIMESTAMP, SYST
 
 ```
 SYSTEM_SUDO_POLICY: EXTERNAL / NOT CONTROLLED BY REPOSITORY
-  - Current: sudo NOPASSWD: ALL
+  - P0 audit snapshot at `a71643a`: sudo NOPASSWD: ALL (environment-specific; recheck live)
   - System can do sudo <arbitrary> outside Gate → YES
 
 PROJECT_PRIVILEGE_POLICY: CONTROLLED BY LINEX.OS
@@ -171,10 +173,10 @@ Even if system sudo is NOPASSWD: ALL, Agent policy does NOT allow same. This is 
 **Distinguish:**
 
 - NETWORK_AVAILABLE: github.com PASS (200 via E2B proxy), api.github.com PASS
-- NETWORK_PARTIALLY_AVAILABLE: Some PASS, some BLOCKED (current Arena: github.com PASS, deb.debian.org BLOCKED, packages.microsoft.com BLOCKED, release-assets.githubusercontent.com BLOCKED)
+- NETWORK_PARTIALLY_AVAILABLE: Some PASS, some BLOCKED (for example, the P0 Arena snapshot recorded below; recheck live)
 - NETWORK_BLOCKED: All or critical BLOCKED
 
-**Current Arena (P3/P4 evidence):**
+**P0 audit network snapshot at `a71643a` (recheck live before treating as current):**
 
 - github.com → PASS (200 via E2B proxy O=E2B)
 - api.github.com → PASS (200, returns v7.6.6)
@@ -189,8 +191,8 @@ Even if system sudo is NOPASSWD: ALL, Agent policy does NOT allow same. This is 
 
 - No auto redirect to random mirror, undocumented proxy, third-party download, untrusted binary
 - When BLOCKED → BLOCKED with evidence (curl -v output showing SSL_ERROR_SYSCALL or Empty reply), then mention official alternatives only
-- For P3: Debian apt mirrors BLOCKED → workaround via git clone https://github.com/pkgconf/pkgconf.git → PASS (github.com allowed), built pkgconf-lite → pkg-config VERIFIED (documented as workaround, not ideal Debian package)
-- For P4: Both Microsoft repo and GitHub .deb fallback BLOCKED due to release-assets and packages.microsoft.com blocked → RESULT BLOCKED per spec, no third-party, no snap, no build from source, no unofficial mirror — requires network allowlist or manual .deb provision
+- P3 environment evidence is time-specific: at audit commit `a71643a`, `pkg-config` is missing from the default PATH and P3 is 43/44. The pinned official pkgconf-lite source was built under `/tmp` for verification only; with that temporary PATH, P3 is 44/44. No system package was installed. Doctor remains fail-closed and exits 3 on the default PATH (ADR 0011 D3); see `docs/reports/baseline-audit-a71643a.md`.
+- P4 audit result: both official download paths were BLOCKED by the measured network restrictions → RESULT BLOCKED, no third-party, no snap, no build from source, no unofficial mirror. Recheck current access before deciding the next step.
 
 **Official sources only (P4):**
 
@@ -221,8 +223,8 @@ Even if system sudo is NOPASSWD: ALL, Agent policy does NOT allow same. This is 
 
 **Current policy in P1-P6 prompts:**
 
-- No commit, no push, no merge, no deployment — only show git status --short and git diff --stat
-- Branch arena/01a107fc-linex-os not yet on GitHub (only main at 768bf39 on remote) per no auto push decision — not a failure
+- No commit, no push, no merge, no deployment — only show `git status --short` and `git diff --stat`
+- Do not infer remote branch or CI status from this policy; inspect live GitHub state with `git ls-remote` and `gh` whenever the task requires it.
 
 ## 9. Testing Rules
 
@@ -322,7 +324,9 @@ In each case: BLOCKED with non-zero exit, evidence, no execution, no ASSUME ALLO
    - Save logs to /tmp for debugging if needed, but not secrets inside repo
 
 10. REPORT
-    - Output STATUS, RESULT, OBJECTIVE, INSPECT, PLAN, CHANGES, TESTS, VERIFICATION, EVIDENCE, BLOCKERS, SECURITY, GIT, NEXT, P<X> COMPLETE YES/NO
+    - Output STATUS, RESULT, OBJECTIVE, INSPECT, PLAN, CHANGES, TESTS, VERIFICATION, EVIDENCE, BLOCKERS, SECURITY, GIT, NEXT, and P<X> COMPLETE YES/NO.
+    - Report `REPOSITORY_STATUS` (PASS/FAIL), `ENVIRONMENT_STATUS` (READY/BLOCKED), and `REMOTE_CI_STATUS` (VERIFIED/NOT VERIFIED) separately, each with measured commit/time and evidence.
+    - A BLOCKED environment may coexist with the actual doctor FAIL/exit 3 for a missing required tool. Preserve doctor semantics exactly; repository suites and remote CI do not soften or override that result.
     - No PASS without evidence, no production claims from local tests, no fake PASS for P4 BLOCKED
 
 11. STOP
@@ -330,7 +334,7 @@ In each case: BLOCKED with non-zero exit, evidence, no execution, no ASSUME ALLO
     - Leave repository in understandable state (e.g., P6 COMPLETE)
 ```
 
-## 13. P4 Known Blocker (Preserved)
+## 13. Legacy P4 Known Blocker (PowerShell; preserved)
 
 ```
 PowerShell 7:
@@ -360,14 +364,17 @@ This blocker is documented in README.md, docs/operations.md, ops/powershell/inst
 Because LINEX.OS is large project:
 
 - No huge feature at once — use MILESTONE → SUBTASK → CHANGE → TEST → VERIFY → EVIDENCE
-- Current milestones:
-  - M0 Repository Ready: Git, README, AGENTS.md, ARENA.md, docs/, ops/, tests/, CI → P5 and P6
-  - M1 Environment Ready: Linux, Bash, sudo, Git, PowerShell, verification → P1-P4 (P4 blocked)
-  - M2 Developer Platform: bootstrap, doctor, cross-platform scripts, dependency management, CI → P5
-  - M3 Security Foundation: privilege policy, command policy, audit logs, secret handling, fail-closed → P2
-  - M4 Core Architecture: core, runtime, agents, tools, permissions, events → P8 future
-  - M5 Product: actual product implementation only after M0-M4 PASS → P9+ future
-- Each milestone leaves repository in understandable state
+- `docs/architecture/roadmap.md` is the active P0–P6 phase authority:
+  - P0 Baseline Reconciliation
+  - P1 MVP Definition + ADRs
+  - P2 P9 Runtime Core
+  - P3 P11/P12 Policy + Capability
+  - P4 P10 Execution Authority
+  - P5 P13/P14 Vertical Slice
+  - P6 CI + Security + Release
+- At baseline commit `a71643a`, the prior P1–P12 artifact ledger was complete as recorded; those numbers are historical identifiers, not the active sequence. The current P0 measurement is in `docs/reports/baseline-audit-a71643a.md`.
+- The MVP scope remains a P1 proposal, not a frozen architecture. No Runtime implementation before P1 decisions are accepted by ADR.
+- Each phase leaves the repository in an understandable state and reports repository, environment, and remote CI separately.
 
 ## 15. Architecture Boundary
 
@@ -455,9 +462,9 @@ P6 must remain repository-only:
 
 ## 18. Git
 
-- No commit, push, merge, deployment in P6 (per prompt)
-- Show git status --short and git diff --stat
-- Branch arena/01a107fc-linex-os is current, not on GitHub yet (only main at 768bf39 on remote) per no auto push decision
+- No commit, push, merge, or deployment in P6 unless explicitly authorized
+- Show `git status --short` and `git diff --stat`
+- Branch and remote state are time-sensitive; inspect the active branch and GitHub state live instead of relying on historical references.
 
 ## 19. References
 
@@ -474,8 +481,8 @@ P6 must remain repository-only:
 
 ---
 
-**Status:** P6 Arena Operating Protocol — defines role, workspace boundaries, repository boundaries, command rules, privilege rules, approval rules, network rules, git rules, testing rules, evidence, stop conditions, operating loop.
+**Status:** This Arena operating protocol originated under the legacy P6 label and continues to define role, workspace/repository boundaries, command and privilege rules, approvals, network/Git/testing rules, evidence, stop conditions, and the operating loop.
 
-**Next:** docs/agent-contract.md (optional, improves separation) and tests, then final validation and consistency check.
+**Next:** Proceed to P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.
 
 **Important:** Arena must LOAD CONTRACT (README.md, AGENTS.md, ARENA.md) at start of every task — this is step 1 of operating loop.

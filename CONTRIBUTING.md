@@ -14,7 +14,7 @@
 - Every change must have tests or verification
 - Run `bash -n` for all Bash scripts (mandatory)
 - Run `shellcheck` if available, else SKIPPED (not FAILURE)
-- Run relevant tests: P2 28 tests, P3 44 tests, P4 18 tests — all must PASS for phase to be COMPLETE, except known BLOCKED due to network (document as BLOCKED, not fake PASS)
+- Run relevant tests: the legacy foundation suites are P2 28 tests, P3 44 tests, and P4 18 tests. These artifact labels are not the active P0–P6 plan; use `docs/architecture/roadmap.md`. Do not call a phase COMPLETE when a required suite fails; classify a missing external tool as an environment blocker without softening the test or doctor result.
 - Include smoke tests for toolchain (C/C++ compile and run) that prove tools work, then delete artifacts
 - Evidence mandatory: captured command outputs, version checks, test logs, dpkg-query, etc.
 
@@ -39,9 +39,9 @@
 
 ### No Dependency Without Justification
 
-- No addition of Docker, Kubernetes, Rust, Go, Java, .NET, Android SDK, CUDA, etc. unless architecture (P8) proves need
+- No addition of Docker, Kubernetes, Rust, Go, Java, .NET, Android SDK, CUDA, etc. unless the P1 MVP ADRs justify it and an authorized phase requires it
 - No npm install, pip install, cargo add just to create CI or docs
-- No application dependencies in P0-P5 (only system packages via Gate with allowlist)
+- No Runtime implementation or implementation dependencies before the required P1 ADR decisions are accepted; system-package changes still require explicit approval and the privilege Gate.
 - For PowerShell: only official sources `packages.microsoft.com` and `github.com/PowerShell/PowerShell`, no third-party, no snap, no unofficial mirror, no build from source
 
 ### Workflow: INSPECT → PLAN → CHANGE → TEST → VERIFY → REPORT
@@ -53,7 +53,7 @@ Mandatory for Arena and contributors:
 3. **CHANGE**: Create files only in repository, no /etc/sudoers modification, no secrets, strict mode, no destructive
 4. **TEST**: bash -n, shellcheck if available, run relevant tests, no real install in tests (dry-run), check forbidden patterns with exclusions to avoid self-match
 5. **VERIFY**: Run verification scripts (bootstrap.sh, verify-environment.sh, doctor.sh, policy-check.sh, toolchain tests), evidence VERIFIED/NOT VERIFIED/BLOCKED/PASS
-6. **REPORT**: STATUS, RESULT, EVIDENCE, CHANGED FILES, TESTS, BLOCKERS, NEXT, P<X> COMPLETE YES/NO — no PASS without evidence
+6. **REPORT**: STATUS, RESULT, EVIDENCE, CHANGED FILES, TESTS, BLOCKERS, NEXT, P<X> COMPLETE YES/NO; report `REPOSITORY_STATUS` (PASS/FAIL), `ENVIRONMENT_STATUS` (READY/BLOCKED), and `REMOTE_CI_STATUS` (VERIFIED/NOT VERIFIED) separately — no PASS without evidence
 
 ### Evidence Mandatory
 
@@ -71,9 +71,9 @@ Mandatory for Arena and contributors:
 
 ### No Auto Deployment
 
-- No auto commit, push, merge, deployment in P1-P5
+- No commit, push, merge, or deployment unless explicitly authorized; follow any stricter per-phase restriction.
 - Show git status --short and changed files only
-- CI is static validation only, no deployment, permissions contents: read
+- CI runs repository validation, security, test, contract, and doctor jobs; it does not deploy and uses least-privilege `contents: read` permissions.
 
 ### Security Invariants (P2)
 
@@ -94,18 +94,18 @@ Verified via policy-check.sh and privilege-policy.test.sh (28 tests PASS).
 
 1. **Check current status:** Read README.md, docs/operations.md component table, and latest P<X> report
 2. **Inspect current branch:** git branch, git status, git log --oneline
-3. **Don't delete P1-P4 files:** If conflict, STOP REPORT, don't delete or restructure security files
-4. **Follow phase order:** P0→P1→P2→P3→P4→P5→P6→P7→P8→P9+. Don't jump to Product Code before foundation PASS
+3. **Preserve historical records:** Do not delete accepted ADRs, prior phase artifacts, or append-only reports to resolve a conflict; stop and propose an explicit, ADR-backed reconciliation.
+4. **Follow the active phase order:** Use `docs/architecture/roadmap.md` (P0 Baseline Reconciliation → P1 MVP Definition + ADRs → P2 P9 Runtime Core → P3 P11/P12 Policy + Capability → P4 P10 Execution Authority → P5 P13/P14 Vertical Slice → P6 CI + Security + Release). P1's proposed MVP scope is not frozen; no Runtime implementation before its required ADR decisions are accepted.
 5. **Create small PR:** One phase per PR, with clear description, evidence, tests
 6. **Run tests locally:** bash -n, policy-check, toolchain tests, powershell tests, bootstrap, verify, doctor
 7. **Update docs:** If you add tool or change policy, update toolchain-manifest.txt, privilege-policy.md, docs/ files, README status table
 8. **Handle blockers:** If network BLOCKED (e.g., packages.microsoft.com, release-assets.githubusercontent.com, deb.debian.org blocked in Arena), document as BLOCKED with evidence (curl -v output), don't use third-party workaround, don't claim fake PASS
 
-## Known Blockers (P5)
+## Environment Notes
 
-- PowerShell 7.6.6 LTS: BLOCKED in Arena network (packages.microsoft.com BLOCKED SSL_ERROR_SYSCALL, release-assets.githubusercontent.com BLOCKED, github.com PASS, api.github.com PASS) — requires network allowlist or manual .deb provision per Microsoft Learn (Debian 12 supported until 2028-06-30)
-- Debian apt mirrors: BLOCKED (deb.debian.org Empty reply) — workaround via GitHub source build for pkg-config succeeded (pkgconf 3.0.0), but apt packages still blocked
-- Branch arena/01a107fc-linex-os not on GitHub yet (only main at 768bf39), per no auto push decision
+- PowerShell 7.6.6 LTS remains BLOCKED in Arena: `packages.microsoft.com` and `release-assets.githubusercontent.com` are unreachable; no third-party source is permitted.
+- Debian apt mirrors are BLOCKED. The P0 audit built official `pkgconf-lite` 3.0.0 under `/tmp` from a pinned GitHub commit for verification only. No system package was installed; `pkg-config` remains missing from the default PATH. See `docs/reports/baseline-audit-a71643a.md`.
+- Branch, commit, PR, and CI state are session- and time-specific; inspect them with `git` and `gh` rather than recording a fixed branch name in this guide.
 
 ## Code Style
 
@@ -123,6 +123,6 @@ LICENSE is currently PENDING OWNER DECISION (placeholder). Don't guess MIT/Apach
 
 ---
 
-**Status:** P5 Contributing rules documented, mandatory for all contributors and Arena.
+**Status:** Contribution workflow and evidence rules. The active phase ledger is `docs/architecture/roadmap.md`; at baseline commit `a71643a`, repository status was PASS, environment status BLOCKED, and remote CI VERIFIED. Product/runtime implementation has not started.
 
-**Next:** P6 Agent Contract (AGENTS.md, ARENA.md) will formalize when Arena inspects, proposes, requests permission, and stops.
+**Next:** P1 MVP Definition + ADRs. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.

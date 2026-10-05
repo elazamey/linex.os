@@ -1,6 +1,19 @@
-# LINEX.OS — Development (P5 Foundation)
+# LINEX.OS — Development Workflow
 
 ## Workflow (Mandatory for Arena and Contributors)
+
+### Active Phase Order
+
+Follow the approved P0–P6 plan in `docs/architecture/roadmap.md`: P0 Baseline Reconciliation; P1
+MVP Definition + ADRs; P2 P9 Runtime Core; P3 P11/P12 Policy + Capability; P4 P10 Execution
+Authority; P5 P13/P14 Vertical Slice; P6 CI + Security + Release. Parenthetical P9–P14 names are
+legacy artifact identifiers, not the active order. P1 must decide language, storage, isolation
+boundary, execution model, evidence model, and failure semantics before any Runtime implementation.
+
+The proposed P1 MVP scope is Linux CLI/local process, Planner → structured actions, Mock Authority
+first then Safe Local Authority, fail-closed policy, explicit/scoped/expiring capabilities,
+append-only execution evidence, and no Agent → shell path. MCP, browser, GUI, default network, and
+production deployment are outside the proposal; it is not frozen and must be decided by P1 ADRs.
 
 ### INSPECT → PLAN → CHANGE → TEST → VERIFY → REPORT
 
@@ -76,7 +89,7 @@ NEXT STEP: ...
 - Check forbidden patterns: no `eval`, no `curl | bash` as executable (exclude test files that intentionally test blocking with self-match avoidance)
 - Check no secrets
 - Check working tree cleanliness: `git status --short`, only intended new files, no unintended artifacts
-- No auto commit/push
+- No commit or push unless explicitly authorized; respect any stricter per-phase restrictions.
 
 #### 5. VERIFY
 
@@ -121,6 +134,8 @@ P<X> COMPLETE: YES/NO
 ```
 
 - No claim PASS without evidence
+- Report `REPOSITORY_STATUS` (PASS/FAIL), `ENVIRONMENT_STATUS` (READY/BLOCKED), and `REMOTE_CI_STATUS` (VERIFIED/NOT VERIFIED) separately, each with measured commit/time and evidence.
+- A BLOCKED environment may coexist with `scripts/doctor.sh` FAIL / exit 3 for a missing required tool. Do not let repository tests or remote CI soften or override the actual doctor result.
 - No claim production ready, fully complete, cross-platform verified unless actually verified with evidence
 - For P4: If Microsoft repo BLOCKED but GitHub fallback VERIFIED → RESULT PASS — OFFICIAL GITHUB FALLBACK with MICROSOFT_REPOSITORY → BLOCKED, GITHUB_OFFICIAL_RELEASE → VERIFIED. If both BLOCKED → RESULT BLOCKED, no third-party
 - For P3: If toolchain already satisfied → RESULT P3 TOOLCHAIN ALREADY SATISFIED, no install for sake of phase
@@ -155,9 +170,9 @@ P<X> COMPLETE: YES/NO
 - No claim "production ready" in README unless actually deployed and verified in production
 
 ### No auto deployment
-- No auto commit, push, merge, deployment in P1-P5
-- Show git status --short and changed files only
-- CI is static validation only, no deployment, no write-all permissions, contents: read only
+- No commit, push, merge, or deployment unless explicitly authorized; follow any stricter per-phase rule
+- Show `git status --short` and changed files
+- CI runs repository validation, security checks, tests, and doctor; it does not deploy and uses least-privilege permissions (`contents: read`).
 
 ### No destructive operations by default
 - DESTRUCTIVE_OPERATION always DENIED in P2-P4
@@ -166,39 +181,29 @@ P<X> COMPLETE: YES/NO
 - Primary control is allowlist, not blacklist
 
 ### No dependency without justification
-- No addition of Docker, K8s, Rust, Go, Java, .NET, Android SDK, CUDA, etc. unless architecture proves need
+- No addition of Docker, K8s, Rust, Go, Java, .NET, Android SDK, CUDA, etc. unless P1 ADRs justify the need and an authorized phase requires it
 - No npm install, pip install, cargo add just to create CI
-- No application dependencies in P0-P5 (only system packages via Gate with allowlist)
+- No Runtime implementation or implementation dependencies before the required P1 ADR decisions are accepted; system-package changes still require explicit approval and the privilege Gate.
 - Document justification in privilege-policy.md or toolchain-manifest.txt
 
 ### Tests mandatory
 - Every change must have tests or verification
-- P2: 28 tests for privilege policy
-- P3: 44 tests for toolchain including smoke tests
-- P4: 18 tests for PowerShell install logic
-- All tests must PASS for phase to be considered COMPLETE, except known BLOCKED due to network (documented as BLOCKED, not fake PASS)
+- The existing foundation suites retain legacy labels P2 (28 privilege-policy tests), P3 (44 toolchain tests), and P4 (18 PowerShell-install tests); these labels are not the active P0–P6 phase order.
+- All required tests must pass for a phase to be COMPLETE. Classify an unavailable external tool as an environment blocker without changing test expectations or doctor semantics.
 
 ### Evidence mandatory
 - Every PASS must have evidence: captured command output, version, test log, dpkg-query, etc.
 - Evidence format for Gate: ACTION, CLASS, POLICY, DECISION, EXECUTION, WOULD EXECUTE, EXIT_CODE, TIMESTAMP, SYSTEM_SUDO, PROJECT_POLICY
 - No evidence → no PASS
 
-## Development Environment (Current)
+## Environment and Branch Evidence
 
-- OS: Debian 12 bookworm x86_64
-- Package manager: apt-get
-- Sudo: NOPASSWD: ALL (external, not controlled)
-- Tools: bash 5.2.15, git 2.39.5, curl 7.88.1, jq 1.6, python3 3.11.2, node 22.22.3, npm 10.9.8, gcc 12.2.0, g++ 12.2.0, make 4.3, pkg-config 3.0.0 (built from GitHub pkgconf)
-- PowerShell: NOT VERIFIED / BLOCKED (P4 network restriction)
-- Network: github.com PASS, api.github.com PASS, deb.debian.org BLOCKED, packages.microsoft.com BLOCKED, release-assets.githubusercontent.com BLOCKED
-- Disk: 21G total, 20G avail
-- Memory: 3.8Gi total, 3.6Gi available
+Environment, branch, remote, and CI state are time-sensitive. Use the latest commit-scoped report under `docs/reports/`; do not copy a branch name, commit ID, or tool status from an older sandbox into this guide. The P0 measurement at `a71643a` is recorded in `docs/reports/baseline-audit-a71643a.md`.
 
-## Branch and Git
-
-- Current branch: arena/01a107fc-linex-os (not yet on GitHub, only main at 768bf39 on remote, per decision no auto commit/push)
-- Workflow: work on arena branch, commit to it, push only to it, open PR from it, never switch to other branch (Arena tracking)
-- No commit/push in P1-P5 phases (per prompts), only show git status
+- Discover the active session branch with `git branch --show-current`; never hard-code its name here.
+- Inspect GitHub branch, PR, and CI state with `git ls-remote` and `gh` before reporting.
+- `scripts/doctor.sh` remains fail-closed: with `pkg-config` absent from the default PATH it exits 3. The audit report separately classifies repository checks, Arena environment readiness, and remote CI; it does not soften the doctor result.
+- Per-phase no-commit/no-push instructions remain in force unless the user explicitly authorizes an exception.
 
 ## Tools
 
@@ -208,14 +213,12 @@ P<X> COMPLETE: YES/NO
 - **Gate**: privilege-gate.sh with dry-run default
 - **Doctor**: scripts/doctor.sh aggregates all checks
 
-## Known Limitations (P5)
+## Known Environment Limitations
 
-- P4 PowerShell installation BLOCKED due to Arena network: packages.microsoft.com and release-assets.githubusercontent.com blocked, only github.com allowed via E2B proxy. No third-party workaround per spec. Will be unblocked when network allowlist includes those domains or manual .deb provision.
-- Debian apt mirrors BLOCKED in Arena: deb.debian.org Empty reply, all mirrors blocked, /var/lib/apt/lists empty. Workaround via GitHub source build for pkg-config succeeded.
-- Branch arena/01a107fc-linex-os not on GitHub yet (only main exists), per no auto push decision.
+- PowerShell runtime remains BLOCKED in this Arena environment because the official Microsoft package and GitHub release-asset hosts are unreachable; no third-party source is permitted.
+- Debian apt mirrors are BLOCKED. The P0 audit verified that the official `pkgconf/pkgconf` GitHub source is reachable and built a temporary `pkgconf-lite` binary under `/tmp`; it was not installed system-wide and the default PATH remains without `pkg-config`.
+- Remote branch, PR, and CI state must be inspected live. The audit at `a71643a` records its measured state in `docs/reports/baseline-audit-a71643a.md`.
 
 ---
 
-**Status:** P5 Development workflow documented, mandatory for Arena and contributors, with evidence-based verification and no blind installation.
-
-**Next:** Operations doc, then P6 Agent Contract.
+**Status:** This file defines the inspect → plan → change → test → verify → report workflow. The active phase plan is in `docs/architecture/roadmap.md`; P0 Baseline Reconciliation is complete (PR #4 open) and P1 MVP Definition + ADRs is next. No Runtime implementation before P1 decisions are accepted.
