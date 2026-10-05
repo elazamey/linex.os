@@ -1,0 +1,29 @@
+# LINEX.OS P14 -- JSON Schema validation dependency (TEST-ONLY, hash-pinned)
+#
+# WHY            : P14 adds real JSON Schema draft 2020-12 meta-schema and instance validation
+#                  for docs/contracts/{tool,skill}-schema.yaml and the fixtures in
+#                  docs/contracts/tool-skill-examples.yaml.
+# SOURCE         : https://pypi.org (official Python package index; verified reachable, HTTP 200)
+# VERSION        : exact pins below; no range and no floating resolution
+# LICENSE        : MIT (jsonschema, attrs, jsonschema-specifications, referencing, rpds-py)
+#                  PSF-2.0 (typing-extensions)
+# RISK           : test-only dependency; installed into a temporary virtual environment outside
+#                  the repository; no repository source code is added; no system packages change
+# ALTERNATIVES   : check-jsonschema (Apache-2.0, larger tree, --check-metaschema built in) or no
+#                  validator at all (the schema group then reports BLOCKED) -- see ADR 0013
+# APPROVED       : owner approval recorded in ADR 0013 (P14); the jsonschema CLI upstream
+#                  deprecation is noted there and accepted under exact version pinning
+# REQUIRED_FOR   : the P14 acceptance criterion that schemas validate against the meta-schema
+#                  and that valid/invalid examples are accepted/rejected
+# INSTALL        : python3 -m venv /tmp/linex-p14-validator
+#                  /tmp/linex-p14-validator/bin/python -m pip install --require-hashes \
+#                    --no-cache-dir -r ops/ci/requirements-p14-jsonschema.txt
+#                  Requires CPython >= 3.11 (rpds-py requires >= 3.11)
+# DIGEST EVIDENCE: every sha256 below was downloaded to /tmp on 2026-10-05, recomputed with
+#                  sha256sum, and compared byte-for-byte with the digest published on PyPI
+attrs==26.1.0 --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
+jsonschema==4.26.0 --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
+jsonschema-specifications==2025.9.1 --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
+referencing==0.37.0 --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
+rpds-py==2026.9.1 --hash=sha256:136a1c3fe4402b7008bc81cb62ee538481795b61a7e83df88dff3b3f02b726ff --hash=sha256:addeda51556dac7c1a2f14cda62db8b621cd12afba3091d03a96c72932387eab --hash=sha256:7868b85224291c6cb6759f9b5adb9745f486d226f62b16a614dd5a2a5ab2b35b
+typing-extensions==4.16.0 --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8

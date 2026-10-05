@@ -1,0 +1,236 @@
+{
+  "format": "YAML 1.2 JSON-compatible subset; jq validates this data without adding a YAML dependency",
+  "schema_version": "1.0.0",
+  "phase": "P14",
+  "scope": "contract-vectors-only; no Tool or Skill runtime is simulated, and no executor is invoked",
+  "instance_fixtures": "docs/contracts/tool-skill-examples.yaml",
+  "cases": [
+    {
+      "id": "TC-P14-01",
+      "acceptance_criterion": "P14-AC-01",
+      "category": "missing-step-authorization",
+      "title": "A step without P11/P12 authorization never reaches P10",
+      "given": "A validated Skill whose step 2 has a pinned Tool, valid bindings, but no P11 decision and no P12 possession/scope confirmation for that step",
+      "when": "The Skill instance reaches step 2 after step 1 completed",
+      "expected": {
+        "step_executed": false,
+        "p10_invoked": false,
+        "executor_request_emitted": false,
+        "step_status": "BLOCKED",
+        "remaining_steps_executed": false,
+        "event_recorded": true
+      },
+      "primary_assertion": "Missing, denied, or unknown P11/P12 authorization prevents the step from reaching P10; there is no implicit or inherited authorization."
+    },
+    {
+      "id": "TC-P14-02",
+      "acceptance_criterion": "P14-AC-02",
+      "category": "hash-mismatch",
+      "title": "An installed version whose hash differs is blocked with no latest fallback",
+      "given": "A step pins tool_id and version 1.0.0 with hash H, and the resolved artifact reports hash H' where H' != H",
+      "when": "The Tool reference is resolved before execution",
+      "expected": {
+        "status": "BLOCKED",
+        "executed": false,
+        "fallback_to_latest": false,
+        "alternate_version_used": false,
+        "event_recorded": true
+      },
+      "primary_assertion": "A hash mismatch is BLOCKED; P14 never falls back to 'latest', never re-pins silently, and never substitutes another version."
+    },
+    {
+      "id": "TC-P14-03",
+      "acceptance_criterion": "P14-AC-03",
+      "category": "resource-limit-descriptor",
+      "title": "A descriptor that exceeds the declared limits is rejected as invalid",
+      "given": "A Tool descriptor whose declared resource limits exceed the permitted bounds, and a Skill step whose limits exceed its Skill resource_budget",
+      "when": "The descriptor is validated before registration or use",
+      "expected": {
+        "descriptor_valid": false,
+        "registration_allowed": false,
+        "execution_attempted": false,
+        "reason_code": "LIMITS_INVALID"
+      },
+      "primary_assertion": "An invalid or unbounded descriptor is rejected; limits are mandatory in P14 and are never defaulted at execution time."
+    },
+    {
+      "id": "TC-P14-04",
+      "acceptance_criterion": "P14-AC-04",
+      "category": "resource-limit-result",
+      "title": "A P10 result that exceeds a limit is reported with evidence, not as success",
+      "given": "An authorized step whose execution produces more output than the declared output_bytes, or exceeds a declared cpu/memory bound",
+      "when": "P10 returns the Result and the limit comparison is recorded",
+      "expected": {
+        "result_status": "RESOURCE_EXCEEDED",
+        "limit_evidence_recorded": true,
+        "promoted_to_succeeded": false,
+        "verified": false,
+        "event_recorded": true
+      },
+      "primary_assertion": "Limit breach produces limit evidence and RESOURCE_EXCEEDED; it is never promoted to SUCCEEDED or VERIFIED, and it stops the linear run."
+    },
+    {
+      "id": "TC-P14-05",
+      "acceptance_criterion": "P14-AC-05",
+      "category": "per-step-authorization",
+      "title": "Authorization is per step and is never inherited",
+      "given": "A Skill whose step 1 received P11 ALLOW and a valid P12 check, and whose step 2 has received no decision",
+      "when": "The run reaches step 2",
+      "expected": {
+        "step1_authorization_reused": false,
+        "blanket_approval": false,
+        "step2_fresh_p11_decision_required": true,
+        "step2_executed_without_decision": false
+      },
+      "primary_assertion": "ALLOW for step N never authorizes step N+1; each step requires its own Action, fresh P11 decision, and independent P12 check."
+    },
+    {
+      "id": "TC-P14-06",
+      "acceptance_criterion": "P14-AC-06",
+      "category": "version-immutability",
+      "title": "A published version cannot be re-pinned in place",
+      "given": "tool_id version 1.0.0 is already published with hash H, and a registry write attempts to publish different content under version 1.0.0 with hash H2",
+      "when": "The registry write is evaluated",
+      "expected": {
+        "status": "BLOCKED",
+        "new_version_required": true,
+        "previous_version_preserved": true,
+        "mutated_in_place": false,
+        "event_recorded": true
+      },
+      "primary_assertion": "Published versions and hashes are immutable; changed content requires a new version, and re-registering an existing version with a different hash is BLOCKED."
+    },
+    {
+      "id": "TC-P14-07",
+      "acceptance_criterion": "P14-AC-07",
+      "category": "risk-bounds",
+      "title": "Risk is never lowered by declaration",
+      "given": "A Skill declared CLASS-1 containing a step declared CLASS-3, and a separate descriptor declared CLASS-6",
+      "when": "The descriptor is validated and P11 evaluates the realized risk",
+      "expected": {
+        "descriptor_valid": false,
+        "declared_below_step_risk": false,
+        "class6_decision": "DENY",
+        "silent_downgrade": false,
+        "parallel_risk_scale": false
+      },
+      "primary_assertion": "The Skill risk_class must be greater than or equal to the highest step risk_class, CLASS-6 is DENY Always, and only the existing P11 CLASS-0..CLASS-6 scale is used."
+    },
+    {
+      "id": "TC-P14-08",
+      "acceptance_criterion": "P14-AC-08",
+      "category": "registry-governance",
+      "title": "A registry write requires explicit delegation and a fresh policy decision",
+      "given": "A Skill or Tool attempts to register itself, or a registry write occurs with no valid P12 delegation and no fresh P11 decision",
+      "when": "The registry write is requested",
+      "expected": {
+        "status": "BLOCKED",
+        "p12_delegation_required": true,
+        "fresh_p11_decision_required": true,
+        "self_registration": false,
+        "invented_capability_ids": false,
+        "event_recorded": true
+      },
+      "primary_assertion": "No registry write happens without an explicit valid P12 delegation plus a fresh P11 decision; no self-grant and no invented CAP_* identifiers are permitted."
+    },
+    {
+      "id": "TC-P14-09",
+      "acceptance_criterion": "P14-AC-09",
+      "category": "evidence-chain",
+      "title": "Each step produces its own P9 evidence and no claim exceeds it",
+      "given": "A two-step Skill where both steps executed and returned Results",
+      "when": "Evidence is assembled under the P9 Event and Result/Evidence contracts",
+      "expected": {
+        "per_step_evidence": true,
+        "evidence_references": ["action_id", "result_id", "executor_id", "exit_status", "correlation_id"],
+        "hash_treated_as_signature": false,
+        "storage_owner": "P15",
+        "verification_owner": "P16",
+        "succeeded_implies_verified": false,
+        "aggregate_upgrades_status": false
+      },
+      "primary_assertion": "Evidence is per step and references P9 objects; a hash is an integrity check and not a signature; storage belongs to P15 and verification to P16; SUCCEEDED is not VERIFIED."
+    },
+    {
+      "id": "TC-P14-10",
+      "acceptance_criterion": "P14-AC-10",
+      "category": "capability-reference",
+      "title": "Declared capability references are not grants",
+      "given": "A Skill step declares CAP_FS_WRITE while the actor holds no valid P12 grant for that capability and scope",
+      "when": "P12 possession and scope are checked, then P11 decides",
+      "expected": {
+        "reference_treated_as_grant": false,
+        "p12_possession": false,
+        "p11_decision": "DENY",
+        "executed": false
+      },
+      "primary_assertion": "capability_refs are descriptive references; possession, scope, validity, expiry, and revocation are decided by P12, and denial by P11 prevents execution."
+    },
+    {
+      "id": "TC-P14-11",
+      "acceptance_criterion": "P14-AC-11",
+      "category": "typed-binding",
+      "title": "An invalid typed binding blocks before execution",
+      "given": "A step whose input_bindings contain a missing required input, a type mismatch with the declared type, or a step_output reference to a later step",
+      "when": "Bindings are validated before the child Action is proposed",
+      "expected": {
+        "status": "BLOCKED",
+        "execution_attempted": false,
+        "value_coerced": false,
+        "default_value_injected": false,
+        "reason_code": "BINDING_INVALID"
+      },
+      "primary_assertion": "Bindings are typed and backward-only within a run; an unresolved or mistyped binding is BLOCKED and is never coerced, defaulted, or guessed."
+    },
+    {
+      "id": "TC-P14-12",
+      "acceptance_criterion": "P14-AC-12",
+      "category": "unknown-tool",
+      "title": "An unknown or unpinned Tool is blocked",
+      "given": "A step references a tool_id with no registry entry, or omits the exact version and hash pin",
+      "when": "The Tool reference is resolved",
+      "expected": {
+        "status": "BLOCKED",
+        "default_executor_selected": false,
+        "unpinned_resolution_allowed": false,
+        "fallback_to_latest": false
+      },
+      "primary_assertion": "Unknown Tool → BLOCKED; an unpinned or unresolvable Tool is never resolved by default, guessed, or routed to a default executor."
+    },
+    {
+      "id": "TC-P14-13",
+      "acceptance_criterion": "P14-AC-13",
+      "category": "failure-semantics",
+      "title": "A failed step stops the linear run without skip or rollback claims",
+      "given": "A three-step Skill whose step 2 fails or is blocked after step 1 was verified",
+      "when": "The failure is processed",
+      "expected": {
+        "on_step_failure": "BLOCKED",
+        "step3_executed": false,
+        "skipped_steps": false,
+        "automatic_retry": false,
+        "fallback_used": false,
+        "step1_evidence_preserved": true,
+        "rollback_claimed": false,
+        "verifier_required": true
+      },
+      "primary_assertion": "on_step_failure is BLOCKED with no skip, continue, fallback, or automatic retry; earlier evidence is preserved and P14 claims no rollback or compensation."
+    },
+    {
+      "id": "TC-P14-14",
+      "acceptance_criterion": "P14-AC-14",
+      "category": "no-dsl-no-runtime",
+      "title": "A branching or expression-bearing descriptor is rejected before P18",
+      "given": "A descriptor that declares conditional branching, a loop, a template/expression binding, or an embedded runtime engine",
+      "when": "The descriptor is validated",
+      "expected": {
+        "descriptor_valid": false,
+        "steps_linear_only": true,
+        "dsl_present": false,
+        "runtime_engine_selected": false,
+        "execution_language_chosen": false
+      },
+      "primary_assertion": "P14 supports linear, pinned, typed steps only: no branching, loops, DSL, expression evaluation, orchestration engine, or implementation language before P18."
+    }
+  ]
+}

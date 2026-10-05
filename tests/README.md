@@ -105,9 +105,9 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ## CI
 
-- `.github/workflows/ci.yml` runs static/security validation, P2-P4/P6 foundation tests, and the P13 contract test plus verifier in Job 5
+- `.github/workflows/ci.yml` runs static/security validation, P2-P4/P6 foundation tests, and the P13 contract test plus verifier in Job 5 (P14 is run in Job 5 and Job 6 with the approved hash-pinned validator)
 - P4 tests that require `pwsh` are classified as NOT VERIFIED / CONDITIONAL if it is missing, not fake PASS
-- P13 vectors are parsed with the existing `jq`; CI does not install an additional YAML or runtime dependency
+- P13 and P14 vectors are parsed with the existing `jq`; `tests/tool-skill.test.sh` additionally delegates JSON Schema draft 2020-12 meta-schema and instance validation to an approved, hash-pinned external validator and reports that group as BLOCKED (never PASS) when none is installed
 - Uses `permissions: contents: read` (least privilege)
 - No Docker, PowerShell, cloud credentials, secrets assumed
 - If GitHub Actions local tool not available: SKIPPED — TOOL NOT AVAILABLE, don't claim GitHub-hosted runner succeeded
@@ -119,6 +119,6 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ---
 
-**Status:** Foundation test inventory preserved; P13 contract checks are 28/28 locally and verifier checks 11/11. P3/P4 environment blockers remain explicitly distinct from contract-test results; Local PASS ≠ Production PASS.
+**Status:** Foundation test inventory preserved; P13 contract checks are 28/28 locally and verifier checks 11/11. P14 contract checks are 40/40 locally, including JSON Schema draft 2020-12 meta-schema validation and 8/8 valid / 33/33 invalid fixtures against the approved hash-pinned validator (`tests/tool-skill.test.sh`; when no validator is installed that group reports BLOCKED, never PASS). P3/P4 environment blockers remain explicitly distinct from contract-test results; Local PASS ≠ Production PASS.
 
-**Next:** P14 Tool + Skill Contract.
+**Next:** P15 Memory/State/Event Contracts. P14 contract checks are 40/40 with the pinned validator in Job 5 and Job 6, and both remote runs were green.

@@ -427,6 +427,28 @@ jobs:
           ./ops/verify/verify-agent-runtime.sh
           echo "P13: contracts and acceptance vectors verified; no Agent Runtime is implemented"
 
+      - name: Tool + Skill contract tests and verification (P14)
+        # The validator is TEST-ONLY and fully hash-pinned (ADR 0013). It is installed into a
+        # temporary virtual environment outside the repository, so no repository source code
+        # and no system package is added. Unpinned resolution fails the build by design:
+        # --require-hashes rejects any artifact whose digest is not in the requirements file.
+        # The validator is deprecated upstream but pinned exactly; changing it is an ADR-level
+        # decision, not an in-place edit.
+        run: |
+          echo "=== Tool + Skill contract tests and verification (P14) ==="
+          command -v python3
+          python3 --version
+          python3 -m venv /tmp/linex-p14-validator
+          /tmp/linex-p14-validator/bin/python -m pip install --quiet --upgrade pip
+          /tmp/linex-p14-validator/bin/python -m pip install --require-hashes --no-cache-dir \
+            -r ops/ci/requirements-p14-jsonschema.txt
+          /tmp/linex-p14-validator/bin/python -m pip list 2>/dev/null | grep -Ei 'jsonschema|referencing|rpds|attrs|typing'
+          export LINEX_JSONSCHEMA_BIN=/tmp/linex-p14-validator/bin/jsonschema
+          chmod +x tests/tool-skill.test.sh ops/verify/verify-tool-skill.sh
+          ./tests/tool-skill.test.sh
+          ./ops/verify/verify-tool-skill.sh
+          echo "P14: Tool + Skill contracts, JSON Schema meta-schema and instance validation verified; no Tool or Skill runtime is implemented"
+
   # Job 6: doctor/final verification
   doctor-final:
     name: "Job 6: Doctor / Final Verification (P7)"
@@ -462,6 +484,13 @@ jobs:
           ./ops/security/tests/agent-contract.test.sh 2>&1 | tail -5
           ./tests/agent-runtime.test.sh 2>&1 | tail -8
           ./ops/verify/verify-agent-runtime.sh 2>&1 | tail -8
+          python3 -m venv /tmp/linex-p14-validator
+          /tmp/linex-p14-validator/bin/python -m pip install --quiet --upgrade pip
+          /tmp/linex-p14-validator/bin/python -m pip install --require-hashes --no-cache-dir \
+            -r ops/ci/requirements-p14-jsonschema.txt
+          export LINEX_JSONSCHEMA_BIN=/tmp/linex-p14-validator/bin/jsonschema
+          ./tests/tool-skill.test.sh 2>&1 | tail -10
+          ./ops/verify/verify-tool-skill.sh 2>&1 | tail -10
           ./scripts/doctor.sh 2>&1 | tail -30
 
       - name: Generate verification summary (artifact, no secrets)
@@ -534,6 +563,8 @@ jobs:
           echo "P6: PASS (15/15)"
           echo "P7: PASS (doctor, secret-scan, static-security-check)"
           echo "P13: PASS (Agent Runtime contract + structured acceptance vectors; contract-only)"
+          echo "P14: PASS (Tool + Skill contract; JSON Schema 2020-12 meta-schema, 8/8 valid and 33/33 invalid fixtures; contract-only)"
+          echo "P14 validator: jsonschema 4.26.0, test-only, hash-pinned in ops/ci/requirements-p14-jsonschema.txt"
           echo ""
           echo "FOUNDATION STATUS: PASS WITH KNOWN BLOCKER"
           echo "KNOWN BLOCKER: P4 PowerShell / Arena Network"
@@ -544,4 +575,4 @@ jobs:
           echo "REMOTE CI: This run is REMOTE CI VERIFIED (on GitHub Actions)"
           echo "LOCAL ARENA: PASS WITH ONE ENVIRONMENT BLOCKER (P3 pkg-config, doctor exit 3) - see docs/reports/"
           echo ""
-          echo "NEXT: P14 Tool + Skill Contract (contracts only) - P8-P13 COMPLETE, see docs/architecture/roadmap.md"
+          echo "NEXT: P15 Memory/State/Event Contracts (contracts only) - P8-P14 COMPLETE, see docs/architecture/roadmap.md"
