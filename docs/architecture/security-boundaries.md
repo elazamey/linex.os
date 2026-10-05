@@ -25,7 +25,7 @@ Forbidden direct paths (must be BLOCKED):
 - LLM → shell (must go via Planner→Policy→Execution)
 - LLM → sudo (must go via Policy→Execution Authority, no arbitrary sudo)
 - LLM → filesystem mutation directly (must go via File Executor via Policy, with CAP_FS_WRITE, scope check, no path traversal)
-- Agent → production database directly (requires CAP + production auth + production evidence, forbidden in P0-P7)
+- Agent → production database directly (requires CAP + production authorization + production evidence; production access is outside the P1 MVP proposal)
 - UI → privileged execution directly (UI→API only, API→Runtime→Policy→Execution, UI must not contain sudo, shell policy, auth logic)
 - MCP server → unrestricted host access (must go via MCP Gateway with trust classification, capability mapping, input/output validation, audit, isolation)
 
@@ -84,7 +84,7 @@ Forbidden direct paths (must be BLOCKED):
 
 ```
 SYSTEM_SUDO_POLICY: EXTERNAL / NOT CONTROLLED BY REPOSITORY
-  - Current Arena: sudo NOPASSWD: ALL (user uid 1001 groups sudo)
+  - P0 audit snapshot at `a71643a`: sudo NOPASSWD: ALL (user uid 1001 groups sudo; environment-specific, recheck live)
   - System can do sudo <arbitrary> outside Gate → YES (expected in sandbox)
   - Example: sudo whoami → root outside Gate
 
@@ -117,7 +117,7 @@ Zones: Trusted (Control Plane), Restricted (Agent Runtime, Tool Runtime, MCP Gat
 
 No Agent→Internet unrestricted without capability + policy.
 
-Current Arena network status (P3/P4 evidence):
+Arena network snapshot from the P0 audit at `a71643a` (recheck live before treating as current):
 
 - github.com → PASS (200 via E2B proxy)
 - api.github.com → PASS (200, v7.6.6)
@@ -125,8 +125,9 @@ Current Arena network status (P3/P4 evidence):
 - release-assets.githubusercontent.com → BLOCKED (SSL_ERROR_SYSCALL 185.199.111.133:443)
 - objects.githubusercontent.com → BLOCKED
 - deb.debian.org → BLOCKED (Empty reply)
+- `pkg-config` → MISSING from the default PATH; P3 43/44 and `scripts/doctor.sh` exit 3. A pinned official pkgconf source build under `/tmp` made P3 44/44 for audit-only verification, but did not modify the system PATH persistently or install a package.
 
-Documented as known limitations, not design failure. No auto redirect to random mirror/undocumented proxy/third-party/untrusted binary.
+Documented as known environment limitations, not design failure. See `docs/reports/baseline-audit-a71643a.md`; no auto redirect to random mirror/undocumented proxy/third-party/untrusted binary.
 
 ## Filesystem Boundaries
 
@@ -153,14 +154,14 @@ Documented as known limitations, not design failure. No auto redirect to random 
 - Mock vs Real: Fake provider MOCK PASS must NOT become PRODUCTION PASS, Local DB REAL LOCAL TEST, Production API REAL PRODUCTION EVIDENCE
 - No MOCK PASS→PRODUCTION PASS
 - Differentiate: Implemented, Tested, Verified, Deployed, Production Verified
-- P0-P7: No production deployment, no production DB access, no cloud provisioning
+- Production deployment, production DB access, and cloud provisioning are outside the P1 MVP proposal and require separate future authorization/evidence
 
 ## Git Boundaries
 
 - READ/INSPECT/MODIFY WORKTREE AUTO: git status, branch, log, diff, write_file, edit_file
 - EXPLICIT ACTION: git commit, push (only to arena/* branch), merge, tag, release — requires EXPLICIT_APPROVAL per prompts P1-P7 (no auto commit/push)
 - DENY unless explicit very strong auth: git push --force, reset --hard, clean -fd, branch deletion, history rewrite
-- Current: branch arena/01a107fc-linex-os local only, main 768bf39 remote, per no auto push decision — not failure, REMOTE CI = NOT VERIFIED until real run on GitHub
+- Remote branch and CI status are time-sensitive evidence, not a security-boundary property. Inspect the active session branch and its GitHub run with `git`/`gh`; report the measured commit and job conclusions in `docs/reports/`.
 
 ## UI/API Boundaries
 

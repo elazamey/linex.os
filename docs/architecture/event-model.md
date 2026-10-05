@@ -40,7 +40,7 @@ Example:
 {
   "event_id": "evt_123456",
   "timestamp": "2026-10-04T18:07:31Z",
-  "actor": "agent:arena/01a107fc-linex-os",
+  "actor": "agent:planner-01",
   "action": "package-install",
   "capability": "CAP_PACKAGE_INSTALL",
   "resource": "pkg-config",

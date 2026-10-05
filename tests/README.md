@@ -51,23 +51,29 @@
 Local PASS ≠ Production PASS
 ```
 
-- Tests in Arena sandbox (Debian 12 bookworm x86_64, 21G disk, 3.8Gi memory, github.com PASS, deb.debian.org BLOCKED) prove that logic is correct, fail-closed, allowlist enforced, no arbitrary execution
-- Production PASS requires actual production environment verification (e.g., GitHub Actions runner, real Debian 12 host with network allowlist for packages.microsoft.com and release-assets.githubusercontent.com, real PowerShell installation)
+- The P0 audit snapshot for this Arena environment is recorded in `docs/reports/baseline-audit-a71643a.md`; network and resource values are measurements, not live claims.
+- Local tests prove logic and contracts, not production readiness. GitHub Actions provides REMOTE CI evidence, not production evidence; production PASS requires verification in the actual production environment.
 
-## Current Tests (P5)
+## Shipped Test Suites (legacy P2–P4 labels)
 
-| Test File | Count | Status | Notes |
-|-----------|-------|--------|-------|
-| ops/security/tests/privilege-policy.test.sh | 28 | PASS | No real install/remove, dry-run only, tests blocking for ; && $() backticks | etc., fail-closed |
-| ops/linux/tests/toolchain.test.sh | 44 | PASS | Required commands exist, version succeeds, package mapping valid, no arbitrary apt, no apt upgrade, no curl|bash, Gate invoked, smoke tests C/C++ PASS |
-| ops/powershell/tests/powershell-install.test.sh | 18 | PASS (logic) / BLOCKED (install) | Debian detection, arch detection, source allowlist, third-party blocked, arbitrary URL blocked, arbitrary path blocked, curl|bash blocked, apt upgrade blocked, metadata validation, pwsh --version logic, smoke test logic, Gate P4 actions, no snap — install itself BLOCKED due to Arena network (packages.microsoft.com and release-assets blocked) |
+These original suite labels identify the test artifacts; they are not the active P0–P6 phase sequence.
 
-**Total: 90 tests PASS (logic), with P4 install BLOCKED as known network restriction, documented as BLOCKED not fake PASS.**
+| Command (run from repository root) | Count | P0 audit result | Notes |
+|------------------------------------|-------|-----------------|-------|
+| `./ops/security/tests/privilege-policy.test.sh` | 28 | 28/28 PASS | No real install/remove; dry-run and fail-closed behavior |
+| `./ops/linux/tests/toolchain.test.sh` | 44 | Default PATH: 43/44 (single `pkg-config` failure); temporary official-source PATH: 44/44 | Also validates package mapping, Gate use, C/C++ smoke tests, and forbidden install patterns |
+| `./ops/powershell/tests/powershell-install.test.sh` | 18 | 18/18 PASS (logic); PowerShell runtime/install BLOCKED | Policy and install logic only; no claim that `pwsh` is installed or verified |
+
+The three suites contain 90 checks in total (`28 + 44 + 18`). In the P0 default-path run,
+89/90 passed and the one failure was the required-but-missing `pkg-config` check. The temporary
+source-built binary under `/tmp` made the P3 suite 44/44 for verification only; no system package
+was installed and the default environment remained unchanged. See `docs/reports/baseline-audit-a71643a.md`.
 
 ## Running Tests
 
 ```bash
-# All
+# P2/P3/P4 suites; default Arena may fail P3 if pkg-config is absent.
+# scripts/doctor.sh must retain exit 3 for this required-tool failure.
 ./ops/security/tests/privilege-policy.test.sh
 ./ops/linux/tests/toolchain.test.sh
 ./ops/powershell/tests/powershell-install.test.sh
@@ -86,11 +92,11 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ## CI
 
-- `.github/workflows/ci.yml` runs static validation only (bash -n, dangerous pattern checks with exclusions)
-- Runs P2, P3, P4 policy tests (P4 tests that require pwsh classified as NOT VERIFIED / CONDITIONAL if pwsh missing, not fake PASS)
-- Uses `permissions: contents: read` (least privilege)
-- No Docker, PowerShell, cloud credentials, secrets assumed
-- If GitHub Actions local tool not available: SKIPPED — TOOL NOT AVAILABLE, don't claim GitHub-hosted runner succeeded
+- `.github/workflows/ci.yml` runs six repository/static, security, policy, toolchain, contract, and doctor jobs; it does not deploy.
+- The P0 audit verified GitHub Actions run `37246010719` on `main` at `a71643a`: all six job conclusions were `success` (`gh run view 37246010719 --json conclusion,headSha,headBranch,event,jobs`).
+- Uses `permissions: contents: read` (least privilege); no Docker installation, cloud credentials, or production services are assumed.
+- Runner log bodies were not retrievable from Arena (`gh run view 37246010719 --log` returned EOF); claim only job-conclusion granularity.
+- A local GitHub Actions tool is not a substitute for a real GitHub-hosted run.
 
 ## No Secrets in Tests
 
@@ -99,6 +105,6 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ---
 
-**Status:** P5 Tests foundation documented, 90 tests PASS (logic), P4 install BLOCKED as known network restriction, Local PASS ≠ Production PASS principle enforced.
+**Status:** Test categories and shipped suites are documented. At baseline commit `a71643a`, `REPOSITORY_STATUS: PASS` for repository-owned security/contract verifiers, `ENVIRONMENT_STATUS: BLOCKED` (`pkg-config` missing; doctor FAIL/exit 3), and `REMOTE_CI_STATUS: VERIFIED` (6/6 jobs) are separate; see `docs/reports/baseline-audit-a71643a.md`.
 
-**Next:** CI foundation, then P6 Agent Contract.
+**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.

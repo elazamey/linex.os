@@ -22,7 +22,7 @@
 
 ```
 SYSTEM_SUDO_POLICY: EXTERNAL / NOT CONTROLLED BY REPOSITORY
-  - Current Arena sandbox: sudo NOPASSWD: ALL
+  - Measured in the P0 audit (`a71643a`): sudo NOPASSWD: ALL (environment-specific; recheck live)
   - Evidence: sudo -n true PASS, sudo -l shows (ALL : ALL) ALL
   - System can do sudo <arbitrary> outside Gate → YES (expected)
 
@@ -93,7 +93,7 @@ But design is **ALLOWLIST + structured actions + fail-closed**, NOT blacklist on
 
 ## Dependency Security
 
-- No application dependencies added in P0-P5 (no npm install, pip install, cargo add just to create CI)
+- No Runtime implementation or implementation dependencies before the required P1 MVP ADR decisions are accepted; no npm install, pip install, or cargo add just to create CI
 - Only system packages via Gate with allowlist and justification
 - For PowerShell: only official sources `packages.microsoft.com` and `github.com/PowerShell/PowerShell`, no third-party, no snap, no unofficial mirror, no build from source
 - Package integrity: HTTP status, Content-Type, file size >0, dpkg-deb --info Package=powershell Arch=amd64 Version contains 7.6.6, checksum from official hashes.sha256 if available (not invented), BLOCKED if metadata incompatible
@@ -106,13 +106,13 @@ But design is **ALLOWLIST + structured actions + fail-closed**, NOT blacklist on
   - SOURCE-1: `packages.microsoft.com` (Microsoft Package Repository)
   - SOURCE-2: `github.com/PowerShell/PowerShell` (official PowerShell releases)
   - Any other source → BLOCKED
-- **Current Arena network (P3/P4 evidence):**
+- **Arena network measured in the P0 audit (`a71643a`; recheck before treating as current):**
   - `github.com` → PASS (200 via E2B proxy)
   - `api.github.com` → PASS (200)
   - `packages.microsoft.com` → BLOCKED (SSL_ERROR_SYSCALL)
   - `release-assets.githubusercontent.com` → BLOCKED (where GitHub release binaries hosted)
   - `deb.debian.org` → BLOCKED (Empty reply)
-- Therefore P3 workaround via `git clone https://github.com/pkgconf/pkgconf.git` → PASS (github.com allowed), built pkgconf-lite → pkg-config VERIFIED
+- P3 environment evidence: Debian mirrors are BLOCKED, while the official `pkgconf/pkgconf` GitHub repository is reachable. During the P0 audit, commit `d908d63634c13b9a4f88d2fe4578d95048a6b13c` was built under `/tmp` for test execution only; no system package was installed and the default PATH remains without `pkg-config`. See `docs/reports/baseline-audit-a71643a.md`.
 - P4 both primary and fallback BLOCKED due to release-assets and packages.microsoft.com blocked, so RESULT BLOCKED per spec, no third-party
 - No third-party PowerShell source, no snap, no unofficial mirror, no binary from untrusted source
 - If both official paths BLOCKED, result is BLOCKED (not fake PASS) — requires network allowlist for packages.microsoft.com and release-assets.githubusercontent.com or manual .deb provision into /tmp/linex-os-powershell/ per official Microsoft Learn (Debian 12 supported until 2028-06-30)
@@ -121,8 +121,8 @@ But design is **ALLOWLIST + structured actions + fail-closed**, NOT blacklist on
 
 - `.github/workflows/ci.yml` uses `permissions: contents: read` (least privilege per GitHub Docs for GITHUB_TOKEN)
 - No `write-all`, no GitHub token with write unless proven need
-- Static validation only: bash -n, check for dangerous patterns with exclusions to avoid self-match on test files that intentionally test blocking
-- No Docker, PowerShell, cloud credentials, secrets assumed in CI
+- CI runs repository validation, security checks, tests, and doctor, with `contents: read`; it does not deploy.
+- No Docker installation, cloud credentials, secrets, or production services are assumed in CI. PowerShell logic tests do not establish the Arena runtime's availability.
 - P4 tests that require pwsh classified as NOT VERIFIED / CONDITIONAL if pwsh missing, not fake PASS
 
 ## Security Invariants (P2)
@@ -157,7 +157,7 @@ Real isolation needs container/user isolation or actual sudoers policy later.
 
 ---
 
-**Status:** P5 Security documented, P1-P4 security checks PASS, P4 BLOCKED as known network restriction with no third-party workaround.
+**Status:** This document describes repository security policy. At audit commit `a71643a`, `REPOSITORY_STATUS` was PASS for repository security checks, `ENVIRONMENT_STATUS` was BLOCKED (`pkg-config` absent; doctor FAIL/exit 3; P4 network-blocked), and `REMOTE_CI_STATUS` was independently VERIFIED (6/6 jobs). See `docs/reports/baseline-audit-a71643a.md`; these states do not alter the fail-closed doctor result.
 
 **References:**
 - Microsoft PowerShell Debian: https://learn.microsoft.com/en-us/powershell/scripting/install/install-debian

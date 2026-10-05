@@ -150,7 +150,7 @@ Schema (contract, no implementation):
 - PASS — verification passed with evidence, e.g., architecture.test.sh 15/15 PASS, policy-check PASS, secret-scan PASS, doctor PASS WITH KNOWN BLOCKER
 - FAIL — verification failed with evidence, e.g., architecture.test.sh 1 failed, policy-check FAIL, secret-scan FAIL
 - BLOCKED — blocked with evidence, e.g., P4 PowerShell BLOCKED with evidence packages.microsoft.com BLOCKED SSL_ERROR_SYSCALL, release-assets BLOCKED, github.com PASS, Gate and logic PASS 18 tests
-- NOT VERIFIED — not verified, e.g., Remote CI NOT VERIFIED, branch not pushed, main at 768bf39, per spec no push, not failure, but not verified
+- NOT VERIFIED — not verified, e.g., no GitHub Actions run exists for the measured commit; do not infer remote status from a local test or a historical branch note
 - VERIFIED — result verified with evidence, e.g., Task Succeeded → Verified, Action Succeeded → Verified, Runtime Ready → Verified
 - UNVERIFIED — result unverified, missing evidence or verifier FAIL, e.g., Task Succeeded → Unverified if no evidence, Action Succeeded → Unverified if missing evidence
 

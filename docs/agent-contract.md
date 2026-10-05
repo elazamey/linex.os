@@ -10,6 +10,11 @@ LINEX.OS principle: **AI PROPOSES → POLICY/AUTHORIZATION DECIDES → EXECUTION
 - AI Agent is NOT Security Boundary
 - AI Agent is NOT Verifier (it produces actions, Verifier validates)
 
+**Active phase gate:** Follow the P0–P6 sequence in `docs/architecture/roadmap.md`. P1 MVP
+Definition + ADRs must decide language, storage, isolation boundary, execution model, evidence
+model, and failure semantics before Runtime implementation. The proposed Linux CLI/local-process
+MVP and its exclusions remain a proposal until P1 ADRs accept or revise it; no Agent → shell path.
+
 Related files:
 - `AGENTS.md` — General Agent rules (constitution for any Agent)
 - `ARENA.md` — Arena-specific operating protocol (role, boundaries, loop, stop conditions)
@@ -188,7 +193,7 @@ Commit/push/merge/tag/release → EXPLICIT ACTION
 No git push --force unless explicit very strong auth
 Forbidden: reset --hard, clean -fd, branch deletion unless explicit
 
-Current P1-P6 prompts: no commit, no push, no merge, no deployment — only git status --short and git diff --stat.
+Follow any stricter per-phase instruction prohibiting commit, push, merge, or deployment; otherwise these actions still require explicit user authorization. Show `git status --short` and `git diff --stat`.
 
 ## 11. Secrets (AGENTS.md Section 12)
 
@@ -204,7 +209,7 @@ New dependency must have: WHY, SOURCE, VERSION, LICENSE, RISK, ALTERNATIVES, REQ
 
 No dependency for convenience, prefer existing capability.
 
-P3 example: pkg-config required for build, official Debian package BLOCKED due to network, workaround via git clone https://github.com/pkgconf/pkgconf.git → built pkgconf-lite → pkg-config VERIFIED (documented as workaround, not ideal).
+P3 evidence example: `pkg-config` is required, but the Debian mirror is BLOCKED. The official `pkgconf/pkgconf` source at commit `d908d63634c13b9a4f88d2fe4578d95048a6b13c` was built under `/tmp` for the P0 audit; P3 tests pass when that temporary binary is on PATH. No system package was installed, so the default environment remains `BLOCKED`/`ENVIRONMENT-DEPENDENT`, not persistently VERIFIED. See `docs/reports/baseline-audit-a71643a.md`.
 
 ## 13. Network (AGENTS.md Section 14)
 
@@ -214,9 +219,10 @@ No auto redirect to random mirror, undocumented proxy, third-party download, unt
 
 When BLOCKED → BLOCKED with evidence, then official alternatives only.
 
-Current Arena:
+Arena network snapshot measured in the P0 audit at `a71643a` (recheck live before treating as current):
 - github.com PASS, api.github.com PASS
 - packages.microsoft.com BLOCKED, release-assets.githubusercontent.com BLOCKED, deb.debian.org BLOCKED
+- `pkg-config` missing from default PATH; default P3 43/44 and doctor exit 3. The temporary official-source build under `/tmp` was verification-only; see `docs/reports/baseline-audit-a71643a.md`.
 
 ## 14. Production Distinction (AGENTS.md Section 17)
 
@@ -227,7 +233,7 @@ Differentiate: Implemented, Tested, Verified, Deployed, Production Verified.
 ## 15. P4 Blocker Preservation
 
 ```
-PowerShell 7: BLOCKED in current Arena
+PowerShell 7: BLOCKED in the P0 Arena audit snapshot (`a71643a`); recheck the environment before treating as current
 
 Evidence:
 - packages.microsoft.com → BLOCKED (SSL_ERROR_SYSCALL 13.107.213.70:443)
@@ -266,7 +272,9 @@ Expected: UI→API→Runtime→Policy→Execution Authority→Verifier
 
 ## 18. Reporting Format
 
-STATUS, RESULT, OBJECTIVE, INSPECT, PLAN, CHANGES, TESTS, VERIFICATION, EVIDENCE, BLOCKERS, SECURITY, GIT, NEXT, P<X> COMPLETE YES/NO
+STATUS, RESULT, OBJECTIVE, INSPECT, PLAN, CHANGES, TESTS, VERIFICATION, EVIDENCE, BLOCKERS, SECURITY, GIT, NEXT, P<X> COMPLETE YES/NO.
+
+Report `REPOSITORY_STATUS` (PASS/FAIL), `ENVIRONMENT_STATUS` (READY/BLOCKED), and `REMOTE_CI_STATUS` (VERIFIED/NOT VERIFIED) separately, each tied to a measured commit/time and evidence. An environment BLOCKED result does not soften the real `scripts/doctor.sh` FAIL / exit 3 when the required `pkg-config` dependency is missing; explain the cause in evidence.
 
 No overclaim: SUCCESS only with appropriate evidence, differentiate Implemented/Tested/Verified/Deployed/Production Verified.
 

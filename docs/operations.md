@@ -1,8 +1,8 @@
-# LINEX.OS — Operations (P5 Foundation)
+# LINEX.OS — Operations Guide
 
 ## Overview
 
-This document describes operational aspects: bootstrap, doctor, verification, toolchain, privilege gate, known network limitations, P4 blocker, and component status table.
+This document describes operational procedures for bootstrap, doctor, verification, toolchain, and the privilege gate. Phase labels attached to these components are original foundation milestones and remain for provenance; they are not the active P0–P6 sequence in `docs/architecture/roadmap.md`. Current environment, repository, and remote-CI measurements are recorded separately in `docs/reports/baseline-audit-a71643a.md`. Do not infer live branch or package state from examples below.
 
 ## 1. Bootstrap
 
@@ -35,8 +35,8 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - **Purpose:** Aggregates verification checks, no installation, read-only
 - **Checks existence** of bootstrap.sh, bootstrap.ps1, verify-environment.sh, verify-environment.ps1, doctor.sh, doctor.ps1
 - **Runs** bootstrap.sh and verify-environment.sh
-- **Summary:** Repository, Git, Linux shell, sudo, PowerShell, Package manager, Network, Required tools, Disk, Memory → PASS / NOT VERIFIED / BLOCKED
-- **Final:** P1 COMPLETE, PowerShell NOT VERIFIED expected, sudo AVAILABLE_NOPASSWD requires P2 policy, STATUS PASS
+- **Summary:** Repository, Git, Linux shell, sudo, PowerShell, package manager, network, required tools, disk, memory, policy/security, and phase test suites → PASS / NOT VERIFIED / BLOCKED / FAIL
+- **P0 audit result:** Default PATH lacks required `pkg-config`; P3 is 43/44 and `scripts/doctor.sh` exits 3. The missing PowerShell runtime is reported as the known P4 blocker, but does not soften or cause the P3 failure. With the temporary source-build PATH, P3 is 44/44 and doctor exits 0 with the known P4 blocker; this does not change default environment readiness. See the audit report.
 - **Usage:**
   ```bash
   ./scripts/doctor.sh
@@ -55,7 +55,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - Verifies Linux toolchain: Required baseline (bash, coreutils, find, grep, sed, awk, tar, gzip, zip, unzip, curl, wget, git, jq, ca-certificates), Developer Build Toolchain (gcc, g++, make, pkg-config, build-essential), Runtimes (python3, node, npm), plus Docker/Podman should be NOT INSTALLED, PowerShell should be NOT VERIFIED for P3
 - Checks package mapping valid (no raw user input), no sudo sh -c, no apt upgrade, Gate usage
 - Disk/Memory
-- Final: STATUS PASS if all toolchain VERIFIED, else NOT VERIFIED
+- Final: this P3 helper reports PASS only if all toolchain tools are present, otherwise NOT VERIFIED. It is not the aggregate `scripts/doctor.sh`; missing `pkg-config` still causes the aggregate doctor to exit 3.
 - Usage:
   ```bash
   ./ops/linux/doctor.sh
@@ -103,7 +103,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - **Gate EXECUTION:** Only if missing, detects package manager, then for each missing: `apt-update --execute` via Gate (to refresh lists, may fail due to Debian network BLOCKED), then `package-install <pkg> --execute` via Gate
 - **Verification after:** gcc --version, g++ --version, make --version, pkg-config --version, git/curl/wget/jq/python3/node/npm versions, dpkg-query -W for installed packages, disk/memory after, security checks (no apt upgrade, no curl|bash, no docker/pwsh install, no sudoers modification, Gate used)
 - **Result:** If no missing → P3 TOOLCHAIN ALREADY SATISFIED, no installation; else P3 TOOLCHAIN INSTALLED
-- **Current status in Arena:** gcc/g++/make/build-essential already VERIFIED via dpkg (base image), pkg-config was MISSING before P3, built from GitHub pkgconf/pkgconf via make -f Makefile.lite due to apt network block (github.com allowed, deb.debian.org blocked), now VERIFIED 3.0.0
+- **P0 audit status:** gcc/g++/make are present; `pkg-config` is MISSING from the default PATH and Debian mirrors are blocked. Official pkgconf source commit `d908d63634c13b9a4f88d2fe4578d95048a6b13c` was built temporarily under `/tmp` for revalidation only; no system package was installed. See `docs/reports/baseline-audit-a71643a.md`.
 - **Usage:**
   ```bash
   ./ops/linux/install-base.sh
@@ -115,7 +115,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - Only VERIFIED after actual command execution
 - Lists baseline, dev toolchain, runtimes, and explicitly NOT REQUIRED (docker, podman, pwsh, java, go, rust, dotnet, cuda)
 - Example: `gcc | gcc | gcc | yes | VERIFIED | 12.2.0 | Debian 12.2.0-14+deb12u1`
-- `pkg-config | pkg-config | pkg-config | yes | VERIFIED | 3.0.0 | pkgconf 3.0.0 built from GitHub due to apt mirror blocked`
+- `pkg-config | pkg-config | pkg-config | yes | ENVIRONMENT-DEPENDENT | missing from default PATH | temporary pkgconf-lite 3.0.0 build under /tmp used for P0 verification only; no system install`
 - `pwsh | pwsh | powershell | P4 | NOT VERIFIED | N/A | P4 will install via Microsoft repo (Debian 12 supported until 2028-06-30)`
 
 ### ops/linux/tests/toolchain.test.sh
@@ -190,7 +190,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - **Dependencies:** Check dependencies, no apt autoremove/upgrade, if dependency missing record explicitly, if dependency requires Debian repo which is BLOCKED → BLOCKED — DEPENDENCY NETWORK
 - **Verify:** command -v pwsh, pwsh --version, pwsh -NoLogo -NoProfile -Command '$PSVersionTable | Format-List' (Edition, Version, OS, Platform, Arch), smoke test pwsh -NoLogo -NoProfile -Command '"LINEX.OS POWERSHELL SMOKE PASS"'
 - **Cross-shell:** ./ops/verify/verify-environment.sh and pwsh ./ops/verify/verify-environment.ps1 → PowerShell should become VERIFIED from NOT VERIFIED
-- **Current Arena status:** Both primary and fallback BLOCKED due to network — packages.microsoft.com BLOCKED (SSL_ERROR_SYSCALL), release-assets.githubusercontent.com BLOCKED (where GitHub binaries hosted, SSL_ERROR_SYSCALL), github.com PASS, api.github.com PASS, deb.debian.org BLOCKED — so RESULT BLOCKED per spec, no third-party
+- **P0 audit status:** Both official paths were BLOCKED — `packages.microsoft.com` and `release-assets.githubusercontent.com`; `github.com` and `api.github.com` were reachable, while Debian mirrors were blocked. PowerShell remained NOT VERIFIED; no third-party source was used. Recheck live before treating this snapshot as current.
 - **Usage:**
   ```bash
   ./ops/powershell/install-pwsh.sh
@@ -198,7 +198,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 
 ## 7. Known Network Limitations
 
-**Arena Sandbox Network (P3/P4 evidence):**
+**Arena sandbox network measured at P0 audit commit `a71643a` (see report; recheck before treating as current):**
 
 | Domain | Status | Evidence | Impact |
 |--------|--------|----------|--------|
@@ -212,7 +212,7 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 | google.com | BLOCKED | SSL_ERROR_SYSCALL | General internet not fully allowed |
 
 **Implications:**
-- P3: apt-get update fails, but workaround via git clone https://github.com/pkgconf/pkgconf.git → PASS, built pkgconf-lite → pkg-config VERIFIED
+- P3: Debian package installation is BLOCKED by the mirror. The official GitHub source was reachable; the P0 audit built a temporary binary and reran P3 44/44 with it on PATH. The default environment still lacks `pkg-config`, so its status remains ENVIRONMENT-DEPENDENT; see the audit report.
 - P4: Both Microsoft repo and GitHub .deb fallback BLOCKED due to release-assets and packages.microsoft.com blocked, so P4 installation BLOCKED, but Gate and logic PASS, no third-party used — correct per spec
 
 ## 8. P4 PowerShell Blocker
@@ -238,26 +238,27 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 - Tests: 18/18 PASS (logic PASS, install BLOCKED documented)
 - Next: Requires network allowlist for packages.microsoft.com and release-assets.githubusercontent.com or manual .deb provision into /tmp/linex-os-powershell/ per official Microsoft Learn
 
-## 9. Component Status Table (P5)
+## 9. Component Status Table (P0 Audit Snapshot at `a71643a`)
 
 | Component | Status | Evidence | Notes |
 |-----------|--------|----------|-------|
-| Repository | PASS | .git exists, git branch arena/01a107fc-linex-os, git log 768bf39 | Branch not yet on GitHub (only main on remote), per no auto push |
+| Repository | PASS | `.git` present; baseline measured at `a71643a`; all repository security and contract verifiers PASS | Branch/PR state is dynamic; inspect with `git` and `gh` |
 | Git | PASS | git version 2.39.5 | VERIFIED |
 | Linux shell (bash) | PASS | GNU bash 5.2.15 | VERIFIED |
 | sudo | PASS | AVAILABLE_NOPASSWD, sudo -n true PASS, sudo -l shows NOPASSWD ALL | Requires P2 policy, SYSTEM_SUDO_POLICY EXTERNAL |
 | PowerShell | BLOCKED / NOT VERIFIED | command -v pwsh MISSING, install-pwsh.sh shows MICROSOFT_REPO_NETWORK BLOCKED, RELEASE_ASSETS_NETWORK BLOCKED, GITHUB_NETWORK PASS | Known blocker, P4 network restriction, no third-party |
 | Package manager | PASS | apt-get at /usr/bin/apt-get | VERIFIED, but apt lists empty due to Debian mirrors BLOCKED |
-| Network | PASS (partial) | github.com PASS, api.github.com PASS, deb.debian.org BLOCKED, packages.microsoft.com BLOCKED, release-assets BLOCKED | Documented as known limitations |
+| Network | PASS (partial) | github.com PASS, api.github.com PASS, deb.debian.org BLOCKED, packages.microsoft.com BLOCKED, release-assets BLOCKED | P0 snapshot; recheck live |
+| Environment readiness | BLOCKED | `pkg-config` missing from the default PATH; Debian package mirror blocked | `scripts/doctor.sh` correctly reports FAIL / exit 3; no forced install or test change |
 | Required tools | PASS | bash, git, curl, wget, jq, tar, gzip, zip, unzip, grep, sed, awk, find, ca-certificates all VERIFIED | P1 |
-| Build toolchain | PASS | gcc 12.2.0, g++ 12.2.0, make 4.3, pkg-config 3.0.0 (built from GitHub), build-essential 12.9 VERIFIED via dpkg | P3, 44 tests PASS, smoke tests PASS |
+| Build toolchain | ENVIRONMENT-DEPENDENT | gcc/g++/make present; `pkg-config` missing from default PATH, Debian mirror blocked | Default P3 43/44; temporary official-source build under `/tmp` gives P3 44/44, no system package installed |
 | Runtimes | PASS | python3 3.11.2, node 22.22.3, npm 10.9.8 VERIFIED | P3 |
 | Docker/Podman | NOT INSTALLED | command -v docker MISSING (expected) | NOT REQUIRED for P3, per spec |
 | Disk | PASS | 21G total, 20G avail (5% used) | No pressure |
 | Memory | PASS | 3.8Gi total, 3.6Gi available | No pressure |
 | Security policy | PASS | privilege-policy.md exists, 5 levels, allowlist, fail-closed, Gate with 28 tests PASS | P2 |
-| Tests | PASS | P2 28/28, P3 44/44, P4 18/18 logic PASS, P1 bootstrap/verify PASS | P4 install BLOCKED but logic PASS |
-| CI | IMPLEMENTED | .github/workflows/ci.yml exists, static validation only, permissions contents: read | P5, no Docker/PowerShell assumed |
+| Tests | ENVIRONMENT-DEPENDENT (default run FAIL) | Default PATH: 255/256 across nine suites (single P3 `pkg-config` failure); temporary source-build PATH: 256/256 | P4 logic 18/18; PowerShell runtime BLOCKED; doctor exit 3 on default PATH. See P0 audit report |
+| CI | VERIFIED | GitHub Actions run `37246010719` at `a71643a`: 6/6 jobs success, least-privilege `contents: read` | Remote CI verified at job granularity; see P0 audit report |
 | Documentation | IMPLEMENTED | docs/vision.md, architecture.md, security.md, development.md, operations.md (this file) | P5 |
 | Config | IMPLEMENTED | config/README.md exists, non-sensitive only | P5 |
 | Tests foundation | IMPLEMENTED | tests/README.md exists, levels documented | P5 |
@@ -282,13 +283,17 @@ pwsh ./ops/powershell/doctor.ps1
 ./ops/security/policy-check.sh
 ./ops/security/tests/privilege-policy.test.sh
 
-# Toolchain
-./ops/linux/install-base.sh
+# Toolchain tests (read-only)
 ./ops/linux/tests/toolchain.test.sh
 
-# PowerShell (will be BLOCKED in Arena due to network, but logic PASS)
-./ops/powershell/install-pwsh.sh
+# Optional package installation — requires explicit authorization; not part of a baseline check
+# ./ops/linux/install-base.sh
+
+# PowerShell policy tests (read-only)
 ./ops/powershell/tests/powershell-install.test.sh
+
+# Optional installation — requires explicit authorization; blocked by Arena network at audit time
+# ./ops/powershell/install-pwsh.sh
 
 # CI local validation
 bash -n $(find ops scripts .github -name "*.sh" -type f)
@@ -299,8 +304,8 @@ bash -n $(find ops scripts .github -name "*.sh" -type f)
 **If apt-get update fails with Empty reply / SSL_ERROR_SYSCALL:**
 - This is Arena sandbox network restriction (deb.debian.org blocked)
 - Don't retry loop, don't add random mirrors, don't use unofficial proxy
-- For P3, workaround via GitHub source build (e.g., pkgconf) is allowed because github.com PASS
-- Document as BLOCKED with evidence
+- For P0 test reproduction only, the pinned official pkgconf source was built temporarily under `/tmp`; that is not an installation or a persistent fix. The default PATH remains missing `pkg-config`, and `scripts/doctor.sh` must keep exit 3.
+- Document the environment gap as BLOCKED/ENVIRONMENT-DEPENDENT with evidence; do not claim the default baseline is repaired.
 
 **If PowerShell install fails with release-assets blocked:**
 - This is same network restriction (release-assets.githubusercontent.com blocked)
@@ -313,6 +318,6 @@ bash -n $(find ops scripts .github -name "*.sh" -type f)
 
 ---
 
-**Status:** P5 Operations documented, P1-P3 PASS, P4 BLOCKED as known network restriction with dual-path design and no third-party, Gate extended for P3/P4 with justification.
+**Status:** This guide documents operational procedures; its historical P5 component labels are superseded for phase sequencing by the current roadmap and commit-scoped reports. At baseline commit `a71643a`, `REPOSITORY_STATUS` was PASS for repository-owned security/contract checks, `ENVIRONMENT_STATUS` was BLOCKED (missing `pkg-config`, doctor FAIL/exit 3, approved apt remediation unavailable), and `REMOTE_CI_STATUS` was independently VERIFIED.
 
-**Next:** P6 Agent Contract (AGENTS.md, ARENA.md).
+**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.

@@ -1,10 +1,10 @@
-# LINEX.OS — Security (P5 Foundation)
+# LINEX.OS — Security Model
 
 ## Overview
 
 LINEX.OS security is built on explicit separation between **System privilege** (external, not controlled) and **Project policy** (controlled by Gate), with allowlist, fail-closed, structured actions, dry-run default, and no secrets.
 
-This document consolidates security decisions from P1-P5.
+This document consolidates security decisions recorded under the original foundation milestones P1–P5; those labels are historical and are not the active P0–P6 sequence.
 
 ## 1. System vs Project Privilege
 
@@ -12,7 +12,7 @@ This document consolidates security decisions from P1-P5.
 
 ```
 Status: EXTERNAL / NOT CONTROLLED BY REPOSITORY
-Current: sudo NOPASSWD: ALL
+Measured in the P0 audit at `a71643a`: sudo NOPASSWD: ALL (environment-specific; recheck live)
 Evidence:
   - sudo -n true → PASS
   - sudo -l → (ALL : ALL) ALL, (ALL : ALL) NOPASSWD: ALL, (ALL) NOPASSWD: ALL, (ALL : ALL) NOPASSWD: ALL
@@ -81,9 +81,9 @@ ca-certificates, curl, wget, git, jq, tar, gzip, zip, unzip, bash, coreutils, fi
 **P3 Extension (justified: Developer Build Baseline minimal for Debian 12, official Debian packages, no docker/k8s/java/go/rust/dotnet):**
 ```
 + gcc, g++, make, pkg-config, build-essential
-- Only pkg-config was MISSING before P3, others already VERIFIED via dpkg
-- pkg-config built from GitHub pkgconf/pkgconf via make -f Makefile.lite due to apt network block in Arena sandbox (github.com allowed, deb.debian.org blocked)
 ```
+
+At the P0 audit, `pkg-config` was missing from the default Arena PATH and Debian mirrors were blocked. The official `pkgconf/pkgconf` source at commit `d908d63634c13b9a4f88d2fe4578d95048a6b13c` was built under `/tmp` for verification only. No system package was installed, so the default PATH remained without `pkg-config`; see `docs/reports/baseline-audit-a71643a.md`.
 
 **P4 Extension (official PowerShell only):**
 ```
@@ -205,7 +205,7 @@ PROJECT_POLICY: CONTROLLED BY LINEX.OS GATE
 
 Any other source → BLOCKED.
 
-**Current Arena network (P3/P4 evidence):**
+**Arena network measured in the P0 audit (`a71643a`; see the audit report):**
 - `github.com` → PASS (200 via E2B proxy)
 - `api.github.com` → PASS (200)
 - `packages.microsoft.com` → BLOCKED (SSL_ERROR_SYSCALL, 13.107.213.70:443)
@@ -214,8 +214,8 @@ Any other source → BLOCKED.
 - `google.com` → BLOCKED (SSL_ERROR_SYSCALL)
 
 Therefore:
-- P3 workaround: `git clone https://github.com/pkgconf/pkgconf.git` → PASS (github.com allowed), built pkgconf-lite from source → provides pkg-config
-- P4: Both primary and fallback BLOCKED due to release-assets and packages.microsoft.com blocked, so RESULT BLOCKED per spec (no third-party)
+- P3 default environment: `pkg-config` is missing and P3 is 43/44; the P0 audit built pinned official pkgconf source temporarily under `/tmp` to rerun P3 at 44/44. This was test-only, not a system install or a persistent fix; `scripts/doctor.sh` still exits 3 on the default PATH by design.
+- P4: both the Microsoft repository and official GitHub release-asset paths were BLOCKED during the P0 audit, so PowerShell remained NOT VERIFIED (no third-party source).
 
 **Supply-chain:**
 - No third-party PowerShell source, no snap, no unofficial mirror, no binary from untrusted source
@@ -248,8 +248,8 @@ Real isolation needs container/user isolation or actual sudoers policy later (fu
 
 - `.github/workflows/ci.yml` uses `permissions: contents: read` (least privilege, per GitHub Docs for GITHUB_TOKEN)
 - No `write-all`, no GitHub token with write unless proven need
-- Static validation only: bash -n, check for dangerous patterns (eval, curl|bash, sudo sh -c) with exclusions to avoid self-match on test files that intentionally test blocking
-- No Docker, PowerShell, cloud credentials, secrets, production services assumed in CI
+- CI performs repository validation, security checks, tests, and doctor using least-privilege permissions; it does not deploy.
+- No Docker installation, cloud credentials, secrets, or production services are assumed in CI. PowerShell tests validate install logic; the Arena runtime remains blocked separately.
 - P4 tests that require pwsh classified as NOT VERIFIED / CONDITIONAL, not fake PASS
 
 ## 14. Reporting
@@ -262,6 +262,6 @@ Real isolation needs container/user isolation or actual sudoers policy later (fu
 
 ---
 
-**Status:** P5 Security documented, P1-P4 security checks PASS, P4 BLOCKED as known network restriction, no third-party workaround, no secrets, no destructive operations, Gate as governance layer.
+**Status:** This guide describes the repository's security boundaries and controls. At audit commit `a71643a`, `REPOSITORY_STATUS` was PASS for repository-owned security checks, `ENVIRONMENT_STATUS` was BLOCKED (`pkg-config` absent; doctor FAIL/exit 3; PowerShell network-blocked), and `REMOTE_CI_STATUS` was independently VERIFIED. See `docs/reports/baseline-audit-a71643a.md`; none of these classifications alters the fail-closed doctor result.
 
-**Next:** Development, Operations docs, then P6 Agent Contract.
+**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The proposed MVP is not frozen; no Runtime implementation before P1 decisions are accepted.
