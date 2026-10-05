@@ -1,9 +1,11 @@
 # LINEX.OS — Roadmap
 
-Phase ledger reconciled to merged git state at `d349f92` per ADR 0011 (D4). Status values
+Baseline phase ledger reconciled to merged `main` at `deb4d13` per ADR 0011 (D4); P13 is the
+contract-only work recorded on the current session branch after that baseline. Status values
 follow ADR 0011 (D2): `COMPLETE` means the phase's documents exist, are self-consistent and are
-machine-checked by a shipped suite that passes — it never means "implemented". Measurements are
-re-derivable via `docs/reports/baseline-audit-d349f92.md`.
+machine-checked by a shipped suite that passes — it never means "implemented". The P1–P12
+measurements are re-derivable via `docs/reports/baseline-audit-d349f92.md`; P13 has separate local
+evidence in its test and verifier outputs.
 
 ## Foundation (P1-P7) — COMPLETE
 
@@ -34,11 +36,11 @@ P7 ✅ COMPLETE — Doctor + CI Hardening + Final Foundation Verification (PASS 
   - Verification-summary.txt artifact, no secrets
   - FOUNDATION STATUS: PASS WITH KNOWN BLOCKER
 
-REMOTE CI: VERIFIED at d349f92 — CI run 37233042304 on main, 6/6 jobs success (Job 1 static
-validation, Job 2 security, Job 3 policy P2, Job 4 toolchain P3, Job 5 contracts P4/P6,
-Job 6 doctor P7). Verified at job-conclusion granularity only: runner log bodies are NOT
-RETRIEVABLE from Arena (results-receiver.actions.githubusercontent.com → EOF), so any claim
-about log contents stays NOT VERIFIED (ADR 0011 D7).
+REMOTE CI: VERIFIED on merged `main` at `deb4d13` before P13 — run 37278075520, 6/6 jobs
+success. Job conclusions and step conclusions are available; runner log bodies remain subject
+to the ADR 0011 D7 retrieval limit. The P13 changes on this session branch have local evidence
+(28/28 contract tests, 11/11 verifier checks); a remote run for these unpushed changes is
+PENDING and is not claimed here.
 The earlier "REMOTE CI: NOT VERIFIED — branch not pushed, main at 768bf39" statement described
 the P7/P8 no-push policy of that time and is superseded: PR #1 and PR #2 were both pushed and
 merged.
@@ -141,27 +143,31 @@ CI-H1…CI-H6 ✅ COMPLETE — CI hardening (NOT a phase; formerly mislabelled "
 
 ## Phase Sequence (P13 onward) — AUTHORITATIVE
 
-Authority: ADR 0011 (D4), which adopts the sequence recorded in the `ACCEPTED` ADRs
-0007 → 0010 and `docs/contracts/README.md`, because that is the sequence P9-P12 actually
-executed. Where the P8-era sketch below differed, the ADR sequence prevails.
+Authority: ADR 0011 (D4) establishes the P13→P18 order after the P9–P12 sequence recorded
+in ADRs 0007→0010; ADR 0012 accepts the P13 contract without changing that order. Where the
+P8-era sketch below differed, the ADR sequence prevails.
 
 ```
-P13 ▶ NEXT — Agent Runtime Contract (CONTRACTS ONLY, no implementation)
-  - Agent model: Identity, Role, Capabilities, Context, Memory reference, Planner, Tools,
-    Policies, Evidence requirements
+P13 ✅ COMPLETE — Agent Runtime Contract (CONTRACTS ONLY, no implementation)
+  - Provider-neutral Agent identity/role, scoped context, Planner, and references to P12
+    capabilities, P14 Tools, P15 Memory, P11 policy, and P9 evidence requirements
   - Planner PROPOSES, never executes; path stays Planner → Policy → Authorization →
     Execution Authority → Verifier → Evidence
   - No LLM → shell direct path, no LLM as final authority, no permission inferred from
     natural-language intent alone (intent → structured Action → schema validation → Policy)
-  - Consumes P9 Action/Task contracts, P10 Execution Authority, P11 Policy decisions,
-    P12 Capability Registry; must not duplicate or redefine any of them
-  - Must respect the P8 freeze; any violation requires an ADR
-  - Deliverables: docs/contracts/agent*.md, ADR 0012, tests/agent-runtime.test.sh,
-    ops/verify/verify-agent-runtime.sh
-  - Explicitly NOT delivered: no agent code, no runtime, no LLM integration, no package
-    install, no new implementation language
+  - Consumes P9 Task/Action/Event/Result, P10 Execution Authority, P11 Policy decisions,
+    P12 Capability Registry; does not duplicate or redefine their state or authority
+  - Ambiguity → NEEDS_CLARIFICATION; denial → REJECTED; missing/unknown authority → BLOCKED
+  - `APPROVED` is not an Agent or Policy state; P11 REQUIRE_APPROVAL needs bound approval,
+    fresh policy evaluation, and independent authorization
+  - Deliverables: docs/contracts/agent-runtime.md, agent-lifecycle.md, agent-audit.md,
+    agent-acceptance-tests.yaml; ADR 0012; tests/agent-runtime.test.sh (28/28 local PASS);
+    ops/verify/verify-agent-runtime.sh (11/11 local PASS)
+  - CI Job 5 includes the P13 tests and verifier; current P13 change's remote run is pending
+  - Explicitly NOT delivered: no Agent code, runtime, LLM integration, package install,
+    new implementation language, cryptographic audit signing, or production evidence
 
-P14 → Tool + Skill Contract (CONTRACTS ONLY)
+P14 ▶ NEXT — Tool + Skill Contract (CONTRACTS ONLY)
   - Tool Contract: ID, semver Version, Input/Output schema, Capability required, Risk class,
     Execution authority, Timeout, Resource limits, Evidence requirements; Unknown Tool → BLOCKED
   - Tool provenance: source, version, hash, version pinning
@@ -285,6 +291,7 @@ No technologies chosen merely to fill gap.
 - frozen-baseline.md (freeze)
 - ADRs 0001-0006 (P8 architecture decisions)
 - ADRs 0007-0010 (P9-P12 contract phases, the sequence D4 adopts)
+- ADR 0012 (P13 Agent Runtime Contract, accepted on the current session branch)
 - adr/0011-baseline-reconciliation-and-phase-numbering.md (status authority, evidence rules,
   phase numbering authority, retired labels — the reason this ledger reads the way it does)
 - docs/reports/README.md (evidence report convention R1-R6)

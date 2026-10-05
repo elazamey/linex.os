@@ -157,9 +157,12 @@ No cycles, no UI→sudo, no LLM→shell, no Agent→prod DB direct, no MCP→unr
 - bash -n for all shell scripts
 - No secrets, no destructive patterns as executable (Test/Policy Boundary from P7/P8 preserved)
 
-## Next
+## Historical phase progression
 
-P10 Execution Authority Contracts — define executors Shell, Process, File, Network, Package with interfaces, capability required, risk, resource limits, evidence, without implementation.
+P9's immediate next phase was P10 Execution Authority Contracts, which are now recorded in
+`execution-authority.md` and ADR 0008. P11 Policy Engine and P12 Capability Registry followed.
+The current contract phase is P13 Agent Runtime (accepted by ADR 0012); the authoritative next
+phase is P14 Tool + Skill Contract, per `docs/architecture/roadmap.md`.
 
 ## References
 
@@ -174,3 +177,27 @@ P10 Execution Authority Contracts — define executors Shell, Process, File, Net
 - docs/architecture/data-model.md (state, memory, artifact, storage)
 - docs/agent-contract.md (AI PROPOSES→POLICY→EXECUTION→VERIFIER)
 - ADR 0007 (this phase)
+
+## P13 — Agent Runtime Contract (ACCEPTED; contracts only)
+
+P13 specifies an Agent identity/role descriptor, scoped context references, a Planner that emits
+P9 Action proposals only, invocation outcomes (`ACTION_PROPOSED`, `NEEDS_CLARIFICATION`,
+`REJECTED`, `BLOCKED`), and explicit handoffs to P11 Policy, P12 Authorization/capability
+checks, P10 Execution Authority, and the P9 Verifier. It does not redefine the P9 Task/Run,
+Action, Event, or Evidence states. `ALLOW` is not `AUTHORIZED`; `REQUIRE_APPROVAL` is not an
+approval. There is no direct LLM/Planner/Agent-to-executor path or self-grant.
+
+P13 deliverables:
+
+- `agent-runtime.md` — concise Agent/Planner and authority contract
+- `agent-lifecycle.md` — Mermaid invocation state machine and component interaction
+- `agent-audit.md` — append-only P9 event use, rejection reasons, and privacy boundaries
+- `agent-acceptance-tests.yaml` — eight YAML 1.2 JSON-compatible structured acceptance vectors,
+  validated with existing `jq` (no YAML parser dependency)
+- `../architecture/adr/0012-agent-runtime-contract.md` — accepted P13 decision
+- `../../tests/agent-runtime.test.sh` — 28/28 local contract checks
+- `../../ops/verify/verify-agent-runtime.sh` — 11/11 local verification checks
+
+The vectors and checks verify contract presence and consistency only; they do not simulate an
+Agent Runtime, prove immutable deployed storage, or constitute production verification. P14
+Tool + Skill Contract is next; technology selection remains reserved for P18.

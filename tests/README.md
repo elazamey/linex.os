@@ -54,26 +54,45 @@ Local PASS ≠ Production PASS
 - Tests in Arena sandbox (Debian 12 bookworm x86_64, 21G disk, 3.8Gi memory, github.com PASS, deb.debian.org BLOCKED) prove that logic is correct, fail-closed, allowlist enforced, no arbitrary execution
 - Production PASS requires actual production environment verification (e.g., GitHub Actions runner, real Debian 12 host with network allowlist for packages.microsoft.com and release-assets.githubusercontent.com, real PowerShell installation)
 
-## Current Tests (P5)
+## Foundation Test Inventory (P1-P7)
+
+The table below records the original P5 foundation suites; later contract suites are listed separately.
 
 | Test File | Count | Status | Notes |
 |-----------|-------|--------|-------|
 | ops/security/tests/privilege-policy.test.sh | 28 | PASS | No real install/remove, dry-run only, tests blocking for ; && $() backticks | etc., fail-closed |
-| ops/linux/tests/toolchain.test.sh | 44 | PASS | Required commands exist, version succeeds, package mapping valid, no arbitrary apt, no apt upgrade, no curl|bash, Gate invoked, smoke tests C/C++ PASS |
+| ops/linux/tests/toolchain.test.sh | 44 | 43/44 locally; CI PASS after provisioning | `pkg-config` is absent in a fresh Arena sandbox and apt mirrors are blocked; all other checks, including C/C++ smoke, pass |
 | ops/powershell/tests/powershell-install.test.sh | 18 | PASS (logic) / BLOCKED (install) | Debian detection, arch detection, source allowlist, third-party blocked, arbitrary URL blocked, arbitrary path blocked, curl|bash blocked, apt upgrade blocked, metadata validation, pwsh --version logic, smoke test logic, Gate P4 actions, no snap — install itself BLOCKED due to Arena network (packages.microsoft.com and release-assets blocked) |
 
-**Total: 90 tests PASS (logic), with P4 install BLOCKED as known network restriction, documented as BLOCKED not fake PASS.**
+**Foundation baseline in Arena:** 90 tests across P2-P4; 89 pass and 1 P3 check fails because `pkg-config` is unavailable locally. P2 28/28 and P4 logic 18/18 pass; P4 installation remains BLOCKED by the known network restriction. CI provisions the P3 baseline before checking it.
+
+## P13 Agent Runtime Contract Checks
+
+| Test File | Count | Status | Notes |
+|-----------|-------|--------|-------|
+| `tests/agent-runtime.test.sh` | 28 | PASS locally | Contract and eight structured acceptance vectors only; no Agent Runtime simulation |
+| `ops/verify/verify-agent-runtime.sh` | 11 | PASS locally | Read-only contract verification; acceptance YAML 1.2 JSON subset parsed with existing `jq` |
+
+The P13 scenarios cover a valid typed proposal, ambiguity, capability/scope denial, approval,
+verified completion, rejection audit, fail-closed unknowns, and untrusted context. Every vector
+has one primary assertion. This is contract evidence, not runtime, immutability, or production
+evidence. CI Job 5 is configured to run both P13 checks; remote CI for the current session-branch
+changes is pending.
 
 ## Running Tests
 
 ```bash
-# All
+# Foundation suites
 ./ops/security/tests/privilege-policy.test.sh
 ./ops/linux/tests/toolchain.test.sh
 ./ops/powershell/tests/powershell-install.test.sh
 
+# P13 contract-only checks
+./tests/agent-runtime.test.sh
+./ops/verify/verify-agent-runtime.sh
+
 # Static
-bash -n $(find ops scripts -name "*.sh" -type f)
+find ops scripts tests -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
 # shellcheck if available
 shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
@@ -86,8 +105,9 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ## CI
 
-- `.github/workflows/ci.yml` runs static validation only (bash -n, dangerous pattern checks with exclusions)
-- Runs P2, P3, P4 policy tests (P4 tests that require pwsh classified as NOT VERIFIED / CONDITIONAL if pwsh missing, not fake PASS)
+- `.github/workflows/ci.yml` runs static/security validation, P2-P4/P6 foundation tests, and the P13 contract test plus verifier in Job 5
+- P4 tests that require `pwsh` are classified as NOT VERIFIED / CONDITIONAL if it is missing, not fake PASS
+- P13 vectors are parsed with the existing `jq`; CI does not install an additional YAML or runtime dependency
 - Uses `permissions: contents: read` (least privilege)
 - No Docker, PowerShell, cloud credentials, secrets assumed
 - If GitHub Actions local tool not available: SKIPPED — TOOL NOT AVAILABLE, don't claim GitHub-hosted runner succeeded
@@ -99,6 +119,6 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 ---
 
-**Status:** P5 Tests foundation documented, 90 tests PASS (logic), P4 install BLOCKED as known network restriction, Local PASS ≠ Production PASS principle enforced.
+**Status:** Foundation test inventory preserved; P13 contract checks are 28/28 locally and verifier checks 11/11. P3/P4 environment blockers remain explicitly distinct from contract-test results; Local PASS ≠ Production PASS.
 
-**Next:** CI foundation, then P6 Agent Contract.
+**Next:** P14 Tool + Skill Contract.

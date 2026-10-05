@@ -24,10 +24,10 @@ LINEX.OS is being built as a disciplined, verifiable **Agent OS** — not a rand
 
 ## Current Status
 
-Authoritative phase ledger: `docs/architecture/roadmap.md`, reconciled to merged git state by
-`docs/architecture/adr/0011-baseline-reconciliation-and-phase-numbering.md`. Measurements below
-were taken at commit `d349f92` and are re-derivable via
-`docs/reports/baseline-audit-d349f92.md`.
+Authoritative phase ledger: `docs/architecture/roadmap.md`, using ADR 0011 for phase order and
+updated on this session branch for P13. P1-P12 baseline measurements were taken at `d349f92` and
+are re-derivable via `docs/reports/baseline-audit-d349f92.md`; P13's separate local evidence is
+listed in the roadmap. The most recent remote CI run on merged `main` is pre-P13 at `deb4d13`.
 
 `COMPLETE` in this project means **the phase's documents/contracts exist, are self-consistent and
 are machine-checked by a shipped suite that passes**. It never means "implemented" — the
@@ -49,8 +49,8 @@ repository intentionally contains no product code until Technology Selection (AD
 | **P11 Policy Engine Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/{policy,policy-matrix,policy-lifecycle}.md`, ADR 0009 — 40/40 tests PASS |
 | **P12 Capability Registry Contract** | ✅ COMPLETE (contracts only) | `docs/contracts/{capability,capability-registry,capability-lifecycle}.md`, ADR 0010 — 45/45 tests PASS |
 | **CI-H1…CI-H6 CI hardening** | ✅ COMPLETE (not a phase) | Self-matching CI checks fixed, dispatch-only debug runner added, P4 failure surfaced as an annotation, Job 4 provisions the P3 baseline before verifying it, PowerShell TEST-1 made distro-agnostic, doctor report made deterministic. Formerly mislabelled "P13 FIX" across `ci.yml`, `ci-debug.yml`, `powershell-install.test.sh`, `doctor.sh` |
-| **Remote CI** | ✅ VERIFIED at `d349f92` | Run `37233042304` on `main`: 6/6 jobs success. Job-level granularity only — runner log bodies are not retrievable from Arena (ADR 0011 D7) |
-| **P13 Agent Runtime Contract** | ▶ NEXT | Contracts only: Agent/Planner model, no LLM → shell path, no agent code |
+| **Remote CI** | ✅ VERIFIED before P13 | Run `37278075520` on `main` at `deb4d13`: 6/6 jobs success. P13's session-branch changes have not yet had a remote run; runner log bodies remain subject to ADR 0011 D7 |
+| **P13 Agent Runtime Contract** | ✅ COMPLETE (contracts only) | ADR 0012; Agent, lifecycle, audit, and 8 structured acceptance vectors; 28/28 local contract checks and 11/11 verifier checks PASS. No runtime or product code; remote CI for this branch is pending |
 
 
 **P4 Blocker Details:**
@@ -227,19 +227,21 @@ P11 Policy Engine Contract → COMPLETE (40/40, contracts only)
   ↓
 P12 Capability Registry Contract → COMPLETE (45/45, contracts only)
   ↓
-P13 Agent Runtime Contract → NEXT (contracts only)
+P13 Agent Runtime Contract → COMPLETE (contracts only; 28/28 tests, 11/11 verifier checks)
   ↓
-P14 Tool + Skill Contract → P15 Memory/State/Event → P16 Verification/Eval → P17 MCP
+P14 Tool + Skill Contract → NEXT (contracts only)
+  ↓
+P15 Memory/State/Event → P16 Verification/Eval → P17 MCP
   ↓
 P18 Technology Selection → implementation language decided here, by ADR
   ↓
 Implementation phases → Product Code (only after P18)
 ```
 
-**Not `P9+ Product Code`:** the P9-P12 phases delivered *contracts*, not code. No product code
-exists in this repository, and none may until Technology Selection decides the implementation
-language (ADR 0009 `DECISION PENDING`, ADR 0011 D5). Introducing a language earlier would
-violate the P8 freeze.
+**Not `P9+ Product Code`:** P9-P13 delivered *contracts*, not product implementation. No product
+runtime exists in this repository, and none may until Technology Selection decides the
+implementation language at P18 (ADR 0011 D5). Introducing a language earlier would violate the
+P8 freeze.
 
 **Why this order?** Because `sudo NOPASSWD: ALL` means system does not enforce fine-grained limits on Arena. So `privilege-gate.sh` must be built as project control layer BEFORE any script that uses sudo. This prevents `install-pwsh.sh` from becoming first channel of root execution without restrictions.
 
@@ -325,13 +327,18 @@ real unmet baseline, and the environment explanation belongs in the evidence lay
 linex.os/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # Static validation only, no Docker/PowerShell assumed
+│       └── ci.yml              # Static/security checks, foundation suites, and P13 contract checks
 ├── docs/
 │   ├── vision.md               # What is LINEX.OS, problem, long-term goal, principles
 │   ├── architecture.md         # Logical layers, dependency direction, no framework
 │   ├── security.md             # Project vs System policy, allowlist, fail-closed
 │   ├── development.md          # INSPECT→PLAN→CHANGE→TEST→VERIFY→REPORT workflow
-│   └── operations.md           # bootstrap, doctor, verification, toolchain, Gate, network limits, P4 blocker table
+│   ├── operations.md           # bootstrap, doctor, verification, toolchain, Gate, network limits, P4 blocker table
+│   └── contracts/              # P9-P13 contract-only specifications
+│       ├── agent-runtime.md     # P13 Agent/Planner, authority, and capability boundaries
+│       ├── agent-lifecycle.md   # P13 invocation state and handoff diagrams
+│       ├── agent-audit.md       # P13 event, rejection, and privacy requirements
+│       └── agent-acceptance-tests.yaml # Eight structured contract vectors
 ├── ops/
 │   ├── bootstrap/
 │   │   ├── bootstrap.sh        # P1 - strict mode, OS/arch/pkg manager detection, no install
@@ -356,11 +363,13 @@ linex.os/
 │   │       └── privilege-policy.test.sh # 28 tests
 │   └── verify/
 │       ├── verify-environment.sh  # P1 - comprehensive verification
-│       └── verify-environment.ps1 # P1 - PowerShell verification
+│       ├── verify-environment.ps1 # P1 - PowerShell verification
+│       └── verify-agent-runtime.sh # P13 - contract-only validation
 ├── config/
 │   └── README.md               # Non-sensitive config only, no secrets
 ├── tests/
-│   └── README.md               # Test levels, Local PASS ≠ Production PASS
+│   ├── README.md               # Test levels, Local PASS ≠ Production PASS
+│   └── agent-runtime.test.sh   # P13 contract and structured-vector checks
 ├── scripts/
 │   ├── doctor.sh               # P1 aggregator - Repository, Git, Linux shell, sudo, PowerShell, etc.
 │   └── doctor.ps1              # P1 aggregator PowerShell
@@ -371,7 +380,7 @@ linex.os/
 └── .gitignore                  # Excludes .env, secrets, logs, build artifacts, OS junk
 ```
 
-**After P5, next is P6:** `AGENTS.md` and `ARENA.md` — the agent contract that tells Arena exactly when to inspect, propose, request permission, and stop. This is what makes the repository suitable for a large project driven by Agent.
+**Historical phase note:** P5 was followed by P6 (`AGENTS.md`, `ARENA.md`, and `docs/agent-contract.md`). The current ledger is `docs/architecture/roadmap.md`: P13 Agent Runtime Contract is complete as a contract-only phase; P14 Tool + Skill Contract is next.
 
 ---
 
@@ -396,14 +405,19 @@ linex.os/
 ./ops/linux/tests/toolchain.test.sh
 ./ops/powershell/tests/powershell-install.test.sh
 
+# P13 Agent Runtime contracts only (no Agent execution)
+./tests/agent-runtime.test.sh
+./ops/verify/verify-agent-runtime.sh
+
 # 6. Try PowerShell install (will be BLOCKED in Arena due to network, but logic PASS)
 ./ops/powershell/install-pwsh.sh
 ```
 
-**Expected in Arena:**
-- P1, P2, P3 → PASS
-- P4 → BLOCKED (network) with evidence, no third-party
-- P5 → Foundation implemented, docs, CI static validation
+**Measured in the current Arena sandbox:**
+- P1, P2 → PASS; P3 → 43/44 (only `pkg-config` missing; apt mirrors are unreachable), so the local P7 doctor exits 3
+- P4 → BLOCKED (network) with evidence; install logic tests pass 18/18, no third-party
+- P13 → 28/28 contract checks and 11/11 verifier checks PASS locally; no Agent runtime is implemented
+- Remote CI on the current P13 change → PENDING until the branch is pushed and a run completes
 
 ---
 
@@ -417,6 +431,6 @@ linex.os/
 
 ---
 
-**Status:** P5 Repository Foundation — IMPLEMENTED (this phase), VERIFIED via tests, with P4 BLOCKED as known network restriction, no third-party workaround.
+**Current status:** P13 Agent Runtime Contract — COMPLETE as documentation and contract checks only (28/28 local tests; 11/11 verifier checks). The P3 `pkg-config` and P4 PowerShell network blockers remain environment-dependent; P13 does not implement a runtime.
 
-**Next:** P6 Agent Contract (AGENTS.md, ARENA.md) — the critical phase that defines when Arena inspects, proposes, requests permission, and stops.
+**Next:** P14 Tool + Skill Contract. Technology selection remains reserved for P18; no product runtime or implementation language has been chosen.
