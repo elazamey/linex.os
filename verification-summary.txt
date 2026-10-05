@@ -1,74 +1,119 @@
-LINEX.OS FOUNDATION VERIFICATION SUMMARY
-Timestamp: 2026-10-04T18:08:10Z
-Branch: arena/01a107fc-linex-os
-Commit: 768bf39
+LINEX.OS VERIFICATION SUMMARY
+Measured commit: d349f92c9346061237e2d4bf3b0cdd17498f236c (= origin/main at measurement time)
+Measured in: Arena sandbox, Debian 12 bookworm x86_64
+Measured at: 2026-10-04 (UTC)
+System changes made: NONE (read-only detection, grep, shipped test suites)
+Governing rules: docs/reports/README.md (R1-R6) and ADR 0011 (D1, D2, D3, D7)
 
-P1: Environment Discovery
-=== RESULT ===
-STATUS → PASS
-RESULT → P1 Bootstrap detection complete, no installation performed, environment is Debian 12 bookworm x86_64 with required tools VERIFIED, PowerShell NOT VERIFIED (expected), sudo AVAILABLE_NOPASSWD (requires P2 Privilege Policy)
-EVIDENCE → Captured via detection functions, command -v, dpkg -l, uname, /etc/os-release
-NEXT → P2 Privilege Policy / Gate (must precede any sudo install)
+NOTE ON THIS FILE
+  The previous version of this file described branch arena/01a107fc-linex-os at commit 768bf39
+  and asserted counts that do not reproduce at d349f92 (see ADR 0011, gap G3). It has been
+  replaced by measurement rather than edited in place. CI Job 6 regenerates a RUNNER-scoped copy
+  of this file and uploads it as an artifact; the copy committed here is the ARENA-scoped record.
+  Neither is authoritative over the other - they measure different environments (R3).
 
-P2: Privilege Policy
-TOTAL: 28
-PASSED: 28
-FAILED: 0
-STATUS → PASS
+=== TEST SUITES (all nine executed) ===
+P2  ops/security/tests/privilege-policy.test.sh        TOTAL: 28  PASSED: 28  FAILED: 0   exit 0
+P3  ops/linux/tests/toolchain.test.sh                  TOTAL: 44  PASSED: 43  FAILED: 1   exit 1
+P4  ops/powershell/tests/powershell-install.test.sh    TOTAL: 18  PASSED: 18  FAILED: 0   exit 0
+P6  ops/security/tests/agent-contract.test.sh          TOTAL: 15  PASSED: 15  FAILED: 0   exit 0
+P8  tests/architecture.test.sh                         TOTAL: 15  PASSED: 15  FAILED: 0   exit 0
+P9  tests/contracts.test.sh                            TOTAL: 15  PASSED: 15  FAILED: 0   exit 0
+P10 tests/execution-authority.test.sh                  TOTAL: 36  PASSED: 36  FAILED: 0   exit 0
+P11 tests/policy.test.sh                               TOTAL: 40  PASSED: 40  FAILED: 0   exit 0
+P12 tests/capability.test.sh                           TOTAL: 45  PASSED: 45  FAILED: 0   exit 0
+                                                                    -------------------------
+    ALL NINE SUITES                                                 TOTAL: 256 PASSED: 255 FAILED: 1
+    Contract suites only (P8+P9+P10+P11+P12 = 15+15+36+40+45)       TOTAL: 151 PASSED: 151 FAILED: 0
 
-P3: Toolchain
-TOTAL: 44
-PASSED: 44
-FAILED: 0
-STATUS → PASS
+=== THE SINGLE FAILURE ===
+version succeeds: pkg-config  -> FAIL (MISSING)
+STATUS -> FAIL (P3 suite exit 1)
+Root cause, measured not assumed:
+  command -v pkg-config                       -> absent
+  apt-cache policy pkg-config                 -> no output (no package index)
+  apt-get -s install pkg-config               -> E: Unable to locate package pkg-config
+  curl -sSI http://deb.debian.org/.../Release -> curl: (52) Empty reply from server
+Classification: BLOCKED BY ENVIRONMENT locally (mirror unreachable, no system change attempted).
+                ENVIRONMENT-DEPENDENT per ADR 0011 D2 - see ops/linux/toolchain-manifest.txt.
+In CI this tool is provided by the Job 4 step "Ensure P3 toolchain baseline (provision, then
+verify)" (CI-H4), which is why the same commit is green there.
 
-P4: PowerShell
-TOTAL: 18
-PASSED: 18
-FAILED: 0
-STATUS → PASS
-ARENA_P4_STATUS = BLOCKED (known external blocker)
-REMOTE_CI_P4_STATUS = NOT VERIFIED (pwsh not on runner)
+=== SECURITY LAYER ===
+bash -n over all 24 *.sh in ops/ scripts/ tests/   -> ALL PASS
+ops/security/policy-check.sh                       -> STATUS PASS   exit 0
+ops/security/secret-scan.sh                        -> STATUS PASS   exit 0
+ops/security/static-security-check.sh              -> STATUS PASS   exit 0
 
-P5: Repository Foundation
-PASS - docs, config, .github, README, LICENSE, etc.
+=== VERIFICATION SCRIPTS ===
+ops/verify/verify-architecture.sh                  -> 37 PASS / 0 FAIL   exit 0
+ops/verify/verify-contracts.sh                     -> 46 PASS / 0 FAIL   exit 0
+ops/verify/verify-execution-authority.sh           -> 67 PASS / 0 FAIL   exit 0
+ops/verify/verify-policy.sh                        -> 104 PASS / 0 FAIL  exit 0
+ops/verify/verify-capability.sh                    -> 87 PASS / 0 FAIL   exit 0
+ops/verify/verify-environment.sh                   -> STATUS PASS (PowerShell NOT VERIFIED expected) exit 0
+ops/bootstrap/bootstrap.sh                         -> STATUS PASS, no installation performed  exit 0
+ops/linux/doctor.sh                                -> STATUS NOT VERIFIED - 1 tools missing (pkg-config) exit 0
 
-P6: Agent Contract
-TEST 7: evidence model STATUS/RESULT/EVIDENCE/NEXT                     → PASS (Evidence model with STATUS/RESULT/EVIDENCE/NEXT and ACTION/CLASS/POLICY/DECISION found)
-TOTAL: 15
-PASSED: 15
-FAILED: 0
-STATUS → PASS
-
-P7: Doctor + Security
-=== RESULT ===
-STATUS → PASS
-RESULT → Secret scan PASS - no secrets found, repository-wide including tests/ and .github
-=== RESULT ===
-STATUS → PASS
-RESULT → Static security check PASS - no dangerous executable patterns
-Tests                   PASS
+=== DOCTOR AGGREGATOR (scripts/doctor.sh) ===
+P1 Environment          PASS
+P2 Privilege            PASS
+P3 Toolchain            FAIL        <- pkg-config only
+P4 PowerShell           BLOCKED     <- known external Arena blocker, does not cause overall FAIL
+P5 Repository           PASS
+P6 Agent Contract       PASS
+P7 Verification         PASS
+Security                PASS
+Secrets                 PASS
+Policy                  PASS
+Tests                   FAIL        <- cascades from P3
 Git Hygiene             PASS
 System Changes          NONE (repository-only)
 
-Counts: PASS=47 FAIL=0 BLOCKED=2 NOT_VERIFIED=0
+Counts: PASS=45 FAIL=1 BLOCKED=2 NOT_VERIFIED=1
+FOUNDATION STATUS (ARENA): FAIL
+EXIT CODE: 3 (FAIL)
 
-FOUNDATION STATUS:
-PASS WITH KNOWN BLOCKER
+Why this FAIL is left as a FAIL: a required toolchain tool is genuinely absent, and a fail-closed
+aggregator must not soften that. The environment explanation belongs in the evidence layer, not
+inside the tool (ADR 0011 D3). The cascade has exactly one root: pkg-config -> P3 suite exit 1 ->
+doctor "P3 Toolchain Tests" FAIL -> doctor "Tests" FAIL -> exit 3.
 
-KNOWN BLOCKER:
-P4 PowerShell / Arena Network
-  - packages.microsoft.com → BLOCKED (SSL_ERROR_SYSCALL in Arena)
-  - release-assets.githubusercontent.com → BLOCKED (SSL_ERROR_SYSCALL in Arena)
-  - github.com → PASS, api.github.com → PASS
-  - Gate and install logic PASS (18 tests), but binary download blocked
-  - No third-party used, official sources only
-  - Requires network allowlist or manual .deb provision into /tmp/linex-os-powershell/ per Microsoft Learn (Debian 12 supported until 2028-06-30)
+=== REMOTE CI (measured from GitHub, not from this sandbox) ===
+REMOTE_CI_STATUS: VERIFIED at d349f92 - run 37233042304 on main, conclusion success
+  Job 1: Repository / Static Validation            success
+  Job 2: Security Validation                       success
+  Job 3: Policy Tests (P2)                         success
+  Job 4: Toolchain Tests (P3)                      success
+  Job 5: Contract Tests (P4, P6)                   success
+  Job 6: Doctor / Final Verification (P7)          success
+Granularity limit (ADR 0011 D7): job conclusions are readable; runner log bodies are NOT
+RETRIEVABLE from Arena (gh run view --log -> results-receiver.actions.githubusercontent.com EOF).
+RUNNER_LOG_CONTENTS: NOT VERIFIED from this sandbox.
 
-EVIDENCE: All essential foundation layers PASS, only P4 known external blocker
-EXIT CODE: 0 (PASS WITH KNOWN BLOCKER)
+=== P4 POWERSHELL ===
+ARENA_P4_STATUS: BLOCKED (packages.microsoft.com and release-assets.githubusercontent.com blocked;
+                 github.com PASS). Gate and install logic PASS 18/18. No third-party source used.
+RUNTIME: NOT VERIFIED in Arena (pwsh absent). CI Job 5 reports runner state per its own semantics.
 
-FOUNDATION STATUS: PASS WITH KNOWN BLOCKER (P4)
-KNOWN BLOCKER: P4 PowerShell / Arena Network (packages.microsoft.com and release-assets.githubusercontent.com blocked)
-REMOTE CI: NOT VERIFIED (branch not pushed, per P7 spec)
-LOCAL: PASS WITH KNOWN BLOCKER
+=== WHAT "COMPLETE" MEANS IN THIS REPOSITORY ===
+No product code exists: 0 .py / .c / .ts / .go / .rs files. Every suite asserts documentation
+properties (file existence, required invariants, contract consistency) and each says so in its
+own header. P8-P12 COMPLETE therefore means "contract written, self-consistent, machine-checked",
+never "implemented". Implementation language stays DECISION PENDING until Technology Selection
+(ADR 0009, ADR 0011 D5).
+
+=== PHASE LEDGER ===
+P1-P7   COMPLETE (foundation; P4 BLOCKED by external network restriction)
+P8      COMPLETE + FROZEN (architecture)
+P9-P12  COMPLETE (contracts only: Core Runtime, Execution Authority, Policy Engine, Capability)
+CI-H1..CI-H6 COMPLETE (CI/doctor hardening; NOT a phase; formerly mislabelled "P13 FIX")
+P13     NEXT - Agent Runtime Contract (contracts only)
+
+=== REPRODUCE ===
+See docs/reports/baseline-audit-d349f92.md section 7 for the exact command sequence.
+Expected in a fresh Arena sandbox: one FAIL (P3 pkg-config) and doctor exit 3.
+Expected in CI: all six jobs success.
+
+EVIDENCE: this file records only commands actually run in the environment named above.
+NEXT: P13 Agent Runtime Contract, per docs/architecture/roadmap.md and ADR 0011 D4.

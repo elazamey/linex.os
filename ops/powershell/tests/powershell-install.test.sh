@@ -62,7 +62,8 @@ log "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log ""
 
 # TEST-1 OS detection + installer OS gate → PASS
-# P13 FIX: this test used to assert that the HOST is Debian 12
+# CI-H5 FIX (CI hardening, NOT phase P13 - see ADR 0011 D4):
+# this test used to assert that the HOST is Debian 12
 # (ID=debian && VERSION_ID="12"). That is an Arena-sandbox property, not a
 # LINEX.OS contract, so the suite failed 17/18 on the GitHub runner, which is
 # Ubuntu 24.04. The P4 contract is that /etc/os-release is read and that the
