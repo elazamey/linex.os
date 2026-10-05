@@ -31,7 +31,19 @@ were taken at commit `d349f92` and are re-derivable via
 
 `COMPLETE` in this project means **the phase's documents/contracts exist, are self-consistent and
 are machine-checked by a shipped suite that passes**. It never means "implemented" — the
-repository intentionally contains no product code until Technology Selection (ADR 0011 D5).
+repository still contains no product code and no implementation language.
+
+Two corrections made after the triage audit of `a71643a` (see
+`docs/reports/triage-correction-and-system-integrity-a71643a.md`):
+
+- **"machine-checked" was over-claimed.** Of 78 artifacts then marked machine-verified,
+  **14 had behavioural evidence**, 12 were checker scripts whose assertions are textual, and
+  52 were documents verified only by text presence. 150 of 162 contract checks (~93%) were
+  text-presence greps.
+- **A demonstration Slice 0 now exists** (`userpath/`, ADR 0012): a Bash-only
+  request → policy → execution → verification → evidence path with 38 behavioural checks. It is
+  explicitly not the product, decides no technology, and the P8 freeze guards still pass
+  unchanged (no `*.py|*.js|*.ts|*.go|*.rs`, no `src/ app/ api/ ui/`).
 
 | Milestone | Status | Evidence |
 |-----------|--------|----------|
@@ -417,6 +429,14 @@ linex.os/
 
 ---
 
-**Status:** P5 Repository Foundation — IMPLEMENTED (this phase), VERIFIED via tests, with P4 BLOCKED as known network restriction, no third-party workaround.
+**Status:** authoritative ledger is `docs/architecture/roadmap.md` (reconciled per ADR 0011).
+As of 2026-10-05: P1–P7 COMPLETE (P4 BLOCKED by Arena network), P8 COMPLETE + FROZEN, P9–P12
+COMPLETE (contracts only), CI-H1…CI-H6 COMPLETE, remote CI VERIFIED (6/6 jobs), and a
+demonstration **Slice 0** user path exists in `userpath/` (ADR 0012) — it decides no technology.
+Licensing remains `PENDING OWNER DECISION`.
 
-**Next:** P6 Agent Contract (AGENTS.md, ARENA.md) — the critical phase that defines when Arena inspects, proposes, requests permission, and stops.
+**Next:** P13 Agent Runtime Contract (contracts only), per `docs/architecture/roadmap.md`.
+
+> Historical note (kept per the evidence convention): this file previously ended with
+> "Status: P5 Repository Foundation … Next: P6 Agent Contract", which described an earlier
+> merged state and was stale by the time of the triage audit (W7).

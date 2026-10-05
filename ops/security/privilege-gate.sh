@@ -24,6 +24,11 @@ ALLOWED_ACTIONS=("check-sudo" "check-package-manager" "package-install" "package
 # - gcc, g++, make, pkg-config, build-essential are required for C/C++ build smoke tests and future build steps
 # - They are official Debian packages, small, non-privileged runtime, no docker/k8s/java/go/rust/dotnet
 # - Only pkg-config is missing in current env, others already VERIFIED but allowlisted for reproducibility
+# P3 runtimes (W1 fix, 2026-10-05): python3, nodejs, npm are declared Required=yes in
+#   ops/linux/toolchain-manifest.txt and are mapped by ops/linux/install-base.sh
+#   TOOL_TO_PACKAGE. They were NOT allowlisted, so install-base.sh could detect them as
+#   missing and then be BLOCKED by this Gate - a declared baseline that was not installable.
+#   tests/governance-consistency.test.sh now asserts manifest(Required=yes) == allowlist.
 ALLOWED_PACKAGES=(
   "ca-certificates"
   "curl"
@@ -45,6 +50,9 @@ ALLOWED_PACKAGES=(
   "make"
   "pkg-config"
   "build-essential"
+  "python3"
+  "nodejs"
+  "npm"
 )
 
 # Allowed services for service-status (read-only)

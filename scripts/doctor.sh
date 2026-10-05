@@ -207,6 +207,19 @@ else
 fi
 
 section "P7 VERIFICATION"
+# Added 2026-10-05 with the W1/W2 remediation and Slice 0 (ADR 0012): these two
+# suites are behavioural/consistency gates, so the aggregator reports them
+# explicitly instead of leaving them invisible.
+if [[ -x "$ROOT_DIR/tests/governance-consistency.test.sh" ]]; then
+  if "$ROOT_DIR/tests/governance-consistency.test.sh" >/dev/null 2>&1; then ver "Governance Consistency (W1/W2)" "PASS"; record "PASS"; else ver "Governance Consistency (W1/W2)" "FAIL"; record "FAIL"; fi
+else
+  ver "Governance Consistency (W1/W2)" "NOT VERIFIED"; record "NOT VERIFIED"
+fi
+if [[ -x "$ROOT_DIR/tests/user-path.test.sh" ]]; then
+  if "$ROOT_DIR/tests/user-path.test.sh" >/dev/null 2>&1; then ver "User Path Slice 0 (38 checks)" "PASS"; record "PASS"; else ver "User Path Slice 0 (38 checks)" "FAIL"; record "FAIL"; fi
+else
+  ver "User Path Slice 0 (38 checks)" "NOT VERIFIED"; record "NOT VERIFIED"
+fi
 if [[ -x "$ROOT_DIR/ops/security/secret-scan.sh" ]]; then
   if "$ROOT_DIR/ops/security/secret-scan.sh" >/dev/null 2>&1; then ver "P7 Secret Scan" "PASS"; record "PASS"; else ver "P7 Secret Scan" "FAIL"; record "FAIL"; fi
 else

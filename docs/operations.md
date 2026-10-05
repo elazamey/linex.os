@@ -94,7 +94,18 @@ This document describes operational aspects: bootstrap, doctor, verification, to
 
 ## 4. Toolchain (P3)
 
-### ops/linux/install-base.sh
+### ops/linux/install-base.sh (default DRY-RUN since 2026-10-05)
+
+**Execution mode:** `--dry-run` is the default and performs no system change (detect, plan, and
+ask the Gate for a decision). Real installation requires an explicit `--execute`, mirroring the
+Gate's own convention (W8 fix; see
+`docs/reports/triage-correction-and-system-integrity-a71643a.md`).
+
+```
+./ops/linux/install-base.sh              # PLAN ONLY, no privileged command
+./ops/linux/install-base.sh --execute    # install allowlisted packages through the Gate
+```
+
 
 - **Workflow:** DETECT → VERIFY → PLAN MISSING → DRY-RUN → GATE → INSTALL ONLY APPROVED → VERIFY
 - **Detects:** Required baseline, Developer Build Toolchain (gcc, g++, make, pkg-config), Runtimes, build-essential via dpkg, disk/memory before (fail-closed if <500MB disk or <300MB memory)

@@ -74,9 +74,37 @@ detect_pkg_manager() {
   echo "unknown"; return 1
 }
 
+# W8 fix (2026-10-05): this script used to call the Gate with --execute
+# unconditionally, so running it performed REAL privileged installs with no
+# dry-run step and no flag - while its own banner claimed "DRY-RUN → GATE →
+# INSTALL ONLY APPROVED". The default is now PLAN + Gate dry-run only; real
+# installation requires an explicit --execute, exactly like the Gate itself.
+EXECUTE_MODE=false
+for arg in "$@"; do
+  case "$arg" in
+    --execute)   EXECUTE_MODE=true ;;
+    --dry-run)   EXECUTE_MODE=false ;;
+    -h|--help)
+      log "USAGE: install-base.sh [--dry-run|--execute]"
+      log "  --dry-run (default): detect, plan, and ask the Gate for a decision. No system change."
+      log "  --execute: perform the allowlisted installs through the Gate."
+      exit 0
+      ;;
+    *)
+      log "BLOCKED: unknown argument '$arg' (use --dry-run or --execute)"
+      exit 2
+      ;;
+  esac
+done
+
 log "LINEX.OS - P3 Linux Developer Toolchain - install-base.sh"
 log "Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log "Mode: DETECT → VERIFY → PLAN → DRY-RUN → GATE → INSTALL ONLY APPROVED"
+if [[ "$EXECUTE_MODE" == "true" ]]; then
+  log "Execution mode: EXECUTE (explicit --execute)"
+else
+  log "Execution mode: DRY-RUN (default; no system changes; use --execute to install)"
+fi
 log "Root: $ROOT_DIR"
 log ""
 
@@ -151,13 +179,21 @@ else
 fi
 
 section "DETECT - RUNTIMES"
+# W1 fix (2026-10-05): python3/nodejs/npm are declared Required=yes in
+# ops/linux/toolchain-manifest.txt, so a missing runtime must be PLANNED here, not
+# only reported. Previously this loop reported MISSING and added nothing to
+# MISSING_PACKAGES: the declared baseline was therefore not installable at all.
+# The Gate now allowlists all three, so planning them cannot end in a BLOCKED
+# decision at runtime (asserted by tests/governance-consistency.test.sh, G2/G3).
 for tool in "${RUNTIMES[@]}"; do
   if check_tool "$tool" >/dev/null; then
     ver "$tool" "FOUND - $($tool --version 2>&1 | head -1)"
   else
-    notver "$tool" "MISSING"
-    # Runtimes are already installed in this env, but if missing, we would not auto-install node/npm via apt in P3 (they are via nvm or official)
-    # For P3, we only handle apt packages, not node via apt
+    notver "$tool" "MISSING - planned for install via Gate (Debian package)"
+    pkg="${TOOL_TO_PACKAGE[$tool]:-}"
+    if [[ -n "$pkg" ]]; then
+      MISSING_PACKAGES+=("$pkg")
+    fi
   fi
 done
 
@@ -200,6 +236,11 @@ fi
 section "GATE EXECUTION (only if missing)"
 if [[ ${#MISSING_PACKAGES[@]} -eq 0 ]]; then
   log "SKIPPED: No installation needed - toolchain already satisfied"
+elif [[ "$EXECUTE_MODE" != "true" ]]; then
+  log "PLAN ONLY (default mode): ${#MISSING_PACKAGES[@]} package(s) missing - ${MISSING_PACKAGES[*]}"
+  log "NOTHING WAS INSTALLED and no privileged command was run."
+  log "The Gate decision for each package was requested above (dry-run evidence)."
+  log "To perform these allowlisted installs, re-run with: $0 --execute"
 else
   PKG_MGR=$(detect_pkg_manager || echo "unknown")
   if [[ "$PKG_MGR" == "unknown" ]]; then

@@ -881,7 +881,14 @@ Preserved: P4 = BLOCKED, no attempt to install PowerShell in P8.
 
 ## 46. Remote CI
 
-No commit, push, merge. Status: REMOTE CI = NOT VERIFIED — branch arena/01a107fc-linex-os not pushed, main still at 768bf39, per P7/P8 spec no push.
+Status at the time of P8 (historical record, superseded): no commit, push or merge; `REMOTE CI = NOT VERIFIED`
+because branch `arena/01a107fc-linex-os` was not pushed and `main` was still at `768bf39`.
+
+**Superseded (2026-10-05):** PR #1, PR #2 and PR #3 were pushed and merged; remote CI is
+`VERIFIED` at job-conclusion granularity — `gh run view 37233042304` (main @ `d349f92`) → success,
+6/6 jobs; `gh run list` → `37246010719` (main @ `a71643a`) → success. Runner log bodies remain
+`NOT VERIFIED` from Arena (ADR 0011 D7). The P8-era sentence above describes the state P8 was
+written in and is kept as history, not as a live claim.
 
 ## 47. System Changes
 

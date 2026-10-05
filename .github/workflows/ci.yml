@@ -46,7 +46,9 @@ jobs:
         run: |
           echo "=== bash -n ==="
           set -e
-          find ops scripts -type f -name "*.sh" | while read -r f; do
+          # Corpus extended (W3-adjacent): tests/ and userpath/ (the Slice 0 code)
+          # were never syntax-checked in CI before.
+          find ops scripts tests userpath -type f -name "*.sh" | while read -r f; do
             echo "Checking $f"
             bash -n "$f" && echo "  → PASS" || (echo "  → FAIL" && exit 1)
           done
@@ -218,6 +220,16 @@ jobs:
           chmod +x ops/security/static-security-check.sh
           ./ops/security/static-security-check.sh
 
+      - name: Governance consistency (W1/W2 regression guard)
+        # Added with the W1/W2 fixes: asserts policy §5 == gate allowlist,
+        # manifest Required=yes ⊆ gate allowlist, install-base TOOL_TO_PACKAGE ⊆
+        # gate allowlist, ci.yml provisioning map ⊆ gate allowlist, no raw
+        # `sudo apt/dpkg` in ci.yml, and that provisioning stays Gate-mediated.
+        run: |
+          echo "=== Governance consistency (W1/W2 regression guard) ==="
+          chmod +x tests/governance-consistency.test.sh
+          ./tests/governance-consistency.test.sh
+
       - name: Security patterns check (no arbitrary execution as executable)
         # CI-H1 FIX (CI hardening, NOT phase P13 - see ADR 0011 D4):
         # this step used to grep `ops scripts` with no file filter, so it
@@ -236,10 +248,10 @@ jobs:
           # Executable corpus: every shell file under ops/ and scripts/.
           # Excludes the denylist data file and Markdown docs, which document
           # forbidden patterns as data rather than executing them.
-          SCAN_TARGETS=$(find ops scripts -type f -name '*.sh' \
+          SCAN_TARGETS=$(find ops scripts userpath -type f -name '*.sh' \
             ! -name 'forbidden-commands.txt' | sort)
           SCAN_COUNT=$(printf '%s\n' "$SCAN_TARGETS" | grep -c . || true)
-          echo "Scanning $SCAN_COUNT executable .sh files under ops/ and scripts/"
+          echo "Scanning $SCAN_COUNT executable .sh files under ops/, scripts/ and userpath/"
           echo "Excluded by design: ops/security/forbidden-commands.txt (denylist data), *.md (docs)"
 
           scan() {
@@ -303,44 +315,75 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Ensure P3 toolchain baseline (provision, then verify)
-        # CI-H4 (CI hardening, NOT phase P13 - see ADR 0011 D4):
-        # Job 4 used to assume every P3 tool was already on the runner.
-        # toolchain.test.sh is a verification test, so a runner that happens to
-        # lack pkg-config/zip/wget turns P3 into a false FAIL (observed in the
-        # Arena sandbox: 43/44, only pkg-config missing). The runner image is not
-        # part of the LINEX.OS contract, so install the P3 baseline first and let
-        # the test verify it. Single-package installs only - no apt upgrade /
-        # full-upgrade / dist-upgrade (forbidden by ops/security/forbidden-commands.txt).
+      - name: Ensure P3 toolchain baseline (provision via Gate, then verify)
+        # CI-H4 (CI hardening, NOT phase P13 - see ADR 0011 D4) established the need
+        # to provision the baseline before verifying it: toolchain.test.sh is a
+        # verification test, and a runner that happens to lack pkg-config/zip/wget
+        # turns P3 into a false FAIL (observed in Arena: 43/44, only pkg-config).
+        #
+        # W2 FIX (2026-10-05): the original CI-H4 step installed the baseline with
+        # raw `sudo apt-get`, bypassing ops/security/privilege-gate.sh - the only
+        # install path the project's own policy claims. It could not have gone
+        # through the Gate either: python3 was not allowlisted and the list mixed
+        # tool names with package names. Both are fixed now:
+        #   - the Gate allowlist is aligned with ops/linux/toolchain-manifest.txt
+        #     (python3, nodejs, npm added; asserted by tests/governance-consistency.test.sh)
+        #   - provisioning below is Gate-mediated: apt-update and package-install --execute,
+        #     with the Gate's own decision lines as evidence, and it fails closed with an
+        #     annotation if the Gate denies a package.
+        # Tool -> Debian package map mirrors ops/linux/install-base.sh TOOL_TO_PACKAGE.
         run: |
           set -eo pipefail
-          echo "=== Ensure P3 toolchain baseline ==="
-          P3_PKGS="findutils grep sed gawk tar gzip zip unzip curl wget git jq ca-certificates gcc g++ make pkg-config python3"
-          MISSING=""
-          for t in find grep sed awk tar gzip zip unzip curl wget git jq gcc g++ make pkg-config python3; do
+          echo "=== Ensure P3 toolchain baseline (Gate-mediated) ==="
+          chmod +x ops/security/privilege-gate.sh
+          GATE=./ops/security/privilege-gate.sh
+
+          declare -A TO_PKG=( [find]="findutils" [awk]="gawk" [grep]="grep" [sed]="sed" \
+            [tar]="tar" [gzip]="gzip" [zip]="zip" [unzip]="unzip" [curl]="curl" \
+            [wget]="wget" [git]="git" [jq]="jq" [gcc]="gcc" [g++]="g++" \
+            [make]="make" [pkg-config]="pkg-config" [python3]="python3" \
+            [node]="nodejs" [npm]="npm" )
+
+          P3_TOOLS="find awk grep sed tar gzip zip unzip curl wget git jq gcc g++ make pkg-config python3 node npm"
+          MISSING_PKGS=""
+          for t in $P3_TOOLS; do
             if ! command -v "$t" >/dev/null 2>&1; then
-              echo "MISSING: $t"
-              MISSING="$MISSING $t"
+              echo "MISSING tool: $t (package ${TO_PKG[$t]})"
+              MISSING_PKGS="$MISSING_PKGS ${TO_PKG[$t]}"
             fi
           done
-          if [ -z "$MISSING" ]; then
+          MISSING_PKGS=$(printf '%s\n' $MISSING_PKGS | sort -u | tr '\n' ' ')
+
+          if [ -z "${MISSING_PKGS// /}" ]; then
             echo "PASS: every P3 tool already present, nothing to install"
+            echo "--- Gate dry-run decision sample (mediation is still exercised) ---"
+            $GATE package-install pkg-config
           else
-            echo "Installing missing P3 baseline via apt-get (no upgrade)"
-            sudo apt-get update -y
-            # shellcheck disable=SC2086
-            sudo apt-get install -y --no-install-recommends $P3_PKGS
+            echo "Missing packages: $MISSING_PKGS"
+            echo "--- Gate: apt-update (dry-run, then --execute) ---"
+            $GATE apt-update
+            $GATE apt-update --execute
+            for pkg in $MISSING_PKGS; do
+              echo "--- Gate: package-install $pkg (dry-run) ---"
+              $GATE package-install "$pkg"
+              echo "--- Gate: package-install $pkg --execute ---"
+              if ! $GATE package-install "$pkg" --execute; then
+                echo "::error file=.github/workflows/ci.yml,title=Gate blocked P3 provisioning::Gate denied package-install of '$pkg'. The Gate allowlist and the P3 manifest disagree - fix ops/security/privilege-gate.sh or ops/linux/toolchain-manifest.txt (tests/governance-consistency.test.sh must pass)."
+                exit 1
+              fi
+            done
           fi
-          echo "=== Post-install verification ==="
-          for t in find grep sed awk tar gzip zip unzip curl wget git jq gcc g++ make pkg-config python3; do
+
+          echo "=== Post-provision verification ==="
+          for t in $P3_TOOLS; do
             if command -v "$t" >/dev/null 2>&1; then
-              printf '%-14s FOUND %s\n' "$t" "$($t --version 2>&1 | head -1)"
+              printf '%-12s FOUND %s\n' "$t" "$($t --version 2>&1 | head -1)"
             else
-              echo "FAIL: $t still missing after provisioning"
+              echo "::error::tool $t still missing after Gate-mediated provisioning"
               exit 1
             fi
           done
-          echo "P3 toolchain baseline PRESENT"
+          echo "P3 toolchain baseline PRESENT (Gate-mediated provisioning)"
 
       - name: Toolchain tests (P3)
         run: |
@@ -464,6 +507,14 @@ jobs:
           echo ""
           echo "=== Doctor exit code ==="
           echo "Exit code 0 = PASS/VERIFIED, 2 = BLOCKED, 3 = FAIL (per P7 semantics)"
+
+      - name: User path - Slice 0 behavioural tests
+        # Behavioural, not text-presence: runs ./userpath/request.sh and asserts on
+        # exit codes, response payload, governance trace and append-only evidence.
+        run: |
+          echo "=== User path - Slice 0 behavioural tests ==="
+          chmod +x userpath/request.sh userpath/*.sh tests/user-path.test.sh
+          ./tests/user-path.test.sh
 
       - name: Final verification - all layers
         run: |

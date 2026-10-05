@@ -119,12 +119,19 @@ Unknown action, unknown package, invalid args, missing policy, malformed input, 
 - Validation: same strict name validation as package, plus service must be in allowed list or match safe pattern
 - Execution: systemctl is-active <service> or systemctl status <service> --no-pager (read-only)
 
-## 5. Package Allowlist (P2)
+## 5. Package Allowlist (P2 core + P3 extensions)
 
-**DEFAULT: DENY** - any package not in list → BLOCKED
+**DEFAULT: DENY** - any package not in this document → BLOCKED
+
+This section is the human-readable mirror of `ALLOWED_PACKAGES` in
+`ops/security/privilege-gate.sh`. It is no longer allowed to drift: the three code blocks
+below are parsed by `tests/governance-consistency.test.sh` and compared, as a set, with the
+Gate's array (W1 fix, 2026-10-05). If you add a package here, add it there, and the test
+will tell you if you forget.
+
+### 5.1 P2 core (15)
 
 ```
-ALLOWED_PACKAGES:
 - ca-certificates
 - curl
 - wget
@@ -142,10 +149,42 @@ ALLOWED_PACKAGES:
 - gawk
 ```
 
-This list is explicit and reviewable. No package outside this list is allowed in P2.
-Future phases may extend list via policy change with justification.
-
+Explicit and reviewable. No package outside this list is allowed in P2.
 For testing in P2, we use these known packages only in dry-run mode, no real install.
+
+### 5.2 P3 build toolchain extension (5)
+
+Justification: minimal Developer Build Baseline for C/C++ smoke tests on Debian 12.
+Official Debian packages only; no docker/k8s/java/go/rust/dotnet was added.
+
+```
+- gcc
+- g++
+- make
+- pkg-config
+- build-essential
+```
+
+### 5.3 P3 runtime extension (3)
+
+Justification: `python3`, `nodejs` and `npm` are declared `Required=yes` in
+`ops/linux/toolchain-manifest.txt` and are mapped by `ops/linux/install-base.sh`
+(`TOOL_TO_PACKAGE`). Before this extension they could be detected as missing and then be
+BLOCKED by the Gate, i.e. a declared baseline that was not installable. The invariant
+"every `Required=yes` package in the manifest is installable through the Gate" is now
+enforced by `tests/governance-consistency.test.sh`.
+
+```
+- python3
+- nodejs
+- npm
+```
+
+**P4 note:** PowerShell provisioning uses the two P4 *actions*
+(`register-microsoft-repository`, `install-powershell-package`), not an entry in this
+package allowlist; the packages they touch (`powershell`, `packages-microsoft-prod`) are
+constructed and validated inside those actions, and the P4 runtime stays `BLOCKED` in
+Arena by network policy (see `docs/operations.md`).
 
 ## 6. Forbidden Commands
 

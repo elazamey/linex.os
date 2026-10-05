@@ -228,6 +228,28 @@ Security Hardening (sandbox Level 1-4,
                            not phase P13; P13 is Agent Runtime Contract.
 ```
 
+### Demonstration Slice (non-phase) — Slice 0
+
+```
+SLICE 0 (2026-10-05) — NOT a phase, NOT product code, NOT a technology choice (ADR 0012)
+  - userpath/ : request -> structured action -> schema -> policy -> executor -> verification
+                -> append-only evidence -> response. Bash only; no new dependency or language.
+  - 2 capabilities demonstrated (CAP_FS_READ, CAP_ECHO); 4 denied by design because no executor
+    exists in the slice (CAP_FS_WRITE needs an approver; CAP_PROCESS_EXEC, CAP_PACKAGE_INSTALL,
+    CAP_NETWORK_CONNECT are out of scope and stay with the Gate / later phases).
+  - Evidence: tests/user-path.test.sh -> 38/38 behavioural checks.
+  - Freeze integrity: tests/contracts.test.sh TEST 10, tests/capability.test.sh TEST-44 and
+    tests/execution-authority.test.sh TEST-35 (which forbid product code, product directories and
+    a chosen technology) still pass UNCHANGED with the slice present.
+  - Same change fixed W1 (allowlist/spec drift + unreachable declared runtimes),
+    W2 (CI provisioned with raw sudo apt-get, outside the Gate) and W8 (install-base.sh had no
+    dry-run default). tests/governance-consistency.test.sh (8 checks) enforces W1/W1b/W2, and was
+    verified to FAIL when each regression is reintroduced.
+  - Accounting correction: of 78 artifacts previously reported as machine-verified at a71643a,
+    14 are behaviourally evidenced, 12 are text-asserting checkers, 52 are text-presence only.
+    See docs/reports/triage-correction-and-system-integrity-a71643a.md.
+```
+
 ### Implementation Gate (unchanged)
 
 ```

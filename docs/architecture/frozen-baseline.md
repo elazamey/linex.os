@@ -7,7 +7,10 @@ Architecture Freeze does NOT mean architecture immutable. Means: No implementati
 Timestamp: 2026-10-04T18:12:00Z
 Branch: arena/01a107fc-linex-os
 Commit: 768bf39
-Foundation: P1-P7 PASS WITH KNOWN BLOCKER P4, Remote CI NOT VERIFIED (branch not pushed)
+Foundation: P1-P7 PASS WITH KNOWN BLOCKER P4, Remote CI NOT VERIFIED at that moment (branch not pushed)
+Superseded 2026-10-05: PR #1-#3 merged; remote CI VERIFIED at job-conclusion granularity
+(37233042304 on main @ d349f92, 37246010719 on main @ a71643a - 6/6 jobs each). The freeze
+itself is unchanged; only this historical status line is annotated.
 
 ## Architectural Decisions — ACCEPTED
 
@@ -204,7 +207,15 @@ Preserved in README, operations, AGENTS, ARENA, install-pwsh.sh, architecture do
 
 ## Remote CI
 
-REMOTE CI = NOT VERIFIED — branch arena/01a107fc-linex-os not pushed, main still at 768bf39, per P7/P8 spec no commit/push/merge, only document, no attempt to make Remote CI VERIFIED without remote run.
+Status recorded when this baseline was frozen: `REMOTE CI = NOT VERIFIED` — branch
+`arena/01a107fc-linex-os` not pushed, `main` still at `768bf39`, per the P7/P8 no-push rule.
+
+**Superseded 2026-10-05:** the no-push rule no longer applies. PRs #1-#4 were pushed and merged
+(#5 merged 2026-10-05), `main` is `6ebda95`, and remote CI is `VERIFIED` at job-conclusion
+granularity: `gh run view 37233042304` (main @ `d349f92`) → success 6/6;
+`gh run list --branch main` → `37246010719` (main @ `a71643a`) → success. Runner log bodies are
+still `NOT VERIFIED` from Arena (ADR 0011 D7). The frozen architecture decisions below are not
+affected; this section is evidence history.
 
 ## System Changes
 
