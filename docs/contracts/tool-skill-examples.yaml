@@ -1,0 +1,1496 @@
+{
+  "format": "YAML 1.2 JSON-compatible subset; jq and JSON Schema validators read this data without adding a YAML parser dependency",
+  "schema_version": "1.0.0",
+  "phase": "P14",
+  "scope": "static schema and invariant fixtures only; no Tool or Skill runtime is simulated",
+  "schemas": {
+    "tool-schema.yaml": "docs/contracts/tool-schema.yaml",
+    "skill-schema.yaml": "docs/contracts/skill-schema.yaml"
+  },
+  "schema_cases": [
+    {
+      "id": "EX-P14-T01",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Process tool at CLASS-2",
+      "instance": {
+        "tool_id": "tool.example.repo_status",
+        "version": "1.0.0",
+        "name": "Repository status reader",
+        "description": "Reads repository status through the process executor with an explicit argument vector.",
+        "source": {"kind": "repository", "locator": "tools/repo_status", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"status": {"type": "string"}}, "required": ["status"], "additionalProperties": false},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "executor_id", "exit_status"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T02",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Read-only file tool at CLASS-0",
+      "instance": {
+        "tool_id": "tool.example.fs_read",
+        "version": "2.1.0",
+        "name": "Workspace file reader",
+        "source": {"kind": "repository", "locator": "tools/fs_read", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_FS_READ"],
+        "risk_class": "CLASS-0",
+        "execution_authority": "file",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"content_ref": {"type": "string"}}, "required": ["content_ref"], "additionalProperties": false},
+        "timeout_seconds": 15,
+        "resource_limits": {"cpu_seconds": 5, "memory_mb": 128, "output_bytes": 32768, "process_count": 1, "file_descriptors": 16},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T03",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Allowlisted network read tool at CLASS-3",
+      "instance": {
+        "tool_id": "tool.example.net_read",
+        "version": "1.2.3",
+        "name": "Allowlisted read-only fetch",
+        "source": {"kind": "upstream-release", "locator": "https://linex.os/allowlisted/read", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_NETWORK_READ"],
+        "risk_class": "CLASS-3",
+        "execution_authority": "network",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"body_ref": {"type": "string"}}, "required": ["body_ref"], "additionalProperties": false},
+        "timeout_seconds": 60,
+        "resource_limits": {"cpu_seconds": 30, "memory_mb": 512, "output_bytes": 262144, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "executor_id", "limit_evidence"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T04",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Package tool at CLASS-4 with Gate evidence",
+      "instance": {
+        "tool_id": "tool.example.pkg_install",
+        "version": "1.0.1",
+        "name": "Allowlisted package installer",
+        "description": "Package installation remains subject to P10, the Privilege Gate, EXPLICIT_APPROVAL, and DRY_RUN first.",
+        "source": {"kind": "package-registry", "locator": "allowlist:pkg-config", "license": "GPL-2.0-or-later"},
+        "integrity": {"algorithm": "sha256", "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PACKAGE_INSTALL"],
+        "risk_class": "CLASS-4",
+        "execution_authority": "package",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object", "properties": {"package": {"type": "string"}}, "required": ["package"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"installed": {"type": "boolean"}}, "required": ["installed"], "additionalProperties": false},
+        "timeout_seconds": 600,
+        "resource_limits": {"cpu_seconds": 300, "memory_mb": 1024, "output_bytes": 131072, "process_count": 8, "file_descriptors": 128},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "executor_id", "exit_status", "verifier_evidence_ref", "limit_evidence"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T05",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Shell tool restricted to CLASS-4/CLASS-5",
+      "instance": {
+        "tool_id": "tool.example.shell_task",
+        "version": "3.0.0",
+        "name": "Bounded shell task",
+        "description": "Shell tools are the most dangerous declaration; they stay CLASS-4/CLASS-5 with DRY_RUN and approval handled by P11.",
+        "source": {"kind": "repository", "locator": "tools/shell_task", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-4",
+        "execution_authority": "shell",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object", "properties": {"script_ref": {"type": "string"}}, "required": ["script_ref"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"exit_status": {"type": "integer"}}, "required": ["exit_status"], "additionalProperties": false},
+        "timeout_seconds": 120,
+        "resource_limits": {"cpu_seconds": 60, "memory_mb": 512, "output_bytes": 65536, "process_count": 4, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "executor_id", "exit_status", "limit_evidence"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T06",
+      "schema": "tool-schema.yaml",
+      "expect": "valid",
+      "title": "Untrusted tool restricted to read-only capability references",
+      "instance": {
+        "tool_id": "tool.example.vendor_reader",
+        "version": "0.9.0",
+        "name": "Vendor-supplied reader",
+        "source": {"kind": "upstream-release", "locator": "https://example.invalid/vendor/reader", "license": "MIT"},
+        "integrity": {"algorithm": "sha256", "hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_FS_READ"],
+        "risk_class": "CLASS-0",
+        "execution_authority": "file",
+        "action_type": "tool.call",
+        "trust_level": "untrusted",
+        "input_schema": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"], "additionalProperties": false},
+        "output_schema": {"type": "object", "properties": {"content_ref": {"type": "string"}}, "required": ["content_ref"], "additionalProperties": false},
+        "timeout_seconds": 20,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 32768, "process_count": 1, "file_descriptors": 16},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "verifier_evidence_ref"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T90",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "version is the literal 'latest'; versions are pinned and immutable, with no floating resolution",
+      "title": "Floating version is rejected",
+      "instance": {
+        "tool_id": "tool.example.floating",
+        "version": "latest",
+        "name": "Floating tool",
+        "source": {"kind": "repository", "locator": "tools/floating", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T91",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "integrity.hash is 63 hex characters, not a sha256 digest",
+      "title": "Truncated hash is rejected",
+      "instance": {
+        "tool_id": "tool.example.short_hash",
+        "version": "1.0.0",
+        "name": "Short hash tool",
+        "source": {"kind": "repository", "locator": "tools/short_hash", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T92",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "CAP_FS_WRITE_ALL does not exist in P12; P14 must not invent CAP_* identifiers",
+      "title": "Invented capability identifier is rejected",
+      "instance": {
+        "tool_id": "tool.example.invented_cap",
+        "version": "1.0.0",
+        "name": "Invented capability tool",
+        "source": {"kind": "repository", "locator": "tools/invented_cap", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_FS_WRITE_ALL"],
+        "risk_class": "CLASS-1",
+        "execution_authority": "file",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T93",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "a shell tool cannot declare CLASS-2; shell is CLASS-4/CLASS-5 only",
+      "title": "Under-classified shell tool is rejected",
+      "instance": {
+        "tool_id": "tool.example.soft_shell",
+        "version": "1.0.0",
+        "name": "Under-classified shell tool",
+        "source": {"kind": "repository", "locator": "tools/soft_shell", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "shell",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T94",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "a package tool must reference CAP_PACKAGE_INSTALL",
+      "title": "Package tool without the package capability is rejected",
+      "instance": {
+        "tool_id": "tool.example.odd_package",
+        "version": "1.0.0",
+        "name": "Package tool without package capability",
+        "source": {"kind": "package-registry", "locator": "allowlist:pkg-config", "license": "GPL-2.0-or-later"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_NETWORK_READ"],
+        "risk_class": "CLASS-4",
+        "execution_authority": "package",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 600,
+        "resource_limits": {"cpu_seconds": 300, "memory_mb": 1024, "output_bytes": 131072, "process_count": 8, "file_descriptors": 128},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T95",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "an untrusted tool may declare read-only capability references only",
+      "title": "Untrusted write capability is rejected",
+      "instance": {
+        "tool_id": "tool.example.untrusted_writer",
+        "version": "1.0.0",
+        "name": "Untrusted writer",
+        "source": {"kind": "upstream-release", "locator": "https://example.invalid/untrusted", "license": "MIT"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_FS_WRITE"],
+        "risk_class": "CLASS-1",
+        "execution_authority": "file",
+        "action_type": "tool.call",
+        "trust_level": "untrusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T96",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "resource_limits are mandatory; a Tool without limits is invalid and is never defaulted",
+      "title": "Missing resource limits are rejected",
+      "instance": {
+        "tool_id": "tool.example.no_limits",
+        "version": "1.0.0",
+        "name": "Unlimited tool",
+        "source": {"kind": "repository", "locator": "tools/no_limits", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T97",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "unknown property auto_approve is rejected (fail-closed: unknown field is invalid)",
+      "title": "Self-approval field is rejected",
+      "instance": {
+        "tool_id": "tool.example.self_approving",
+        "version": "1.0.0",
+        "name": "Self-approving tool",
+        "source": {"kind": "repository", "locator": "tools/self_approving", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "auto_approve": true,
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T98",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "mcp is not a P10 executor and is reserved for P17; only shell/process/file/network/package are valid",
+      "title": "Future executor authority is rejected",
+      "instance": {
+        "tool_id": "tool.example.mcp_caller",
+        "version": "1.0.0",
+        "name": "MCP caller",
+        "source": {"kind": "repository", "locator": "tools/mcp_caller", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "mcp",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T99",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "a non-deterministic tool cannot be declared in P14",
+      "title": "Non-deterministic tool is rejected",
+      "instance": {
+        "tool_id": "tool.example.creative",
+        "version": "1.0.0",
+        "name": "Non-deterministic tool",
+        "source": {"kind": "repository", "locator": "tools/creative", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": false
+      }
+    },
+    {
+      "id": "EX-P14-T9A",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "pinning must be IMMUTABLE; an active published version cannot be re-pinned",
+      "title": "Mutable pinning is rejected",
+      "instance": {
+        "tool_id": "tool.example.tracking",
+        "version": "1.0.0",
+        "name": "Version tracking tool",
+        "source": {"kind": "repository", "locator": "tools/tracking", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "TRACK_LATEST"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T9B",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "timeout_seconds must be at least 1; a zero timeout is not a valid declaration",
+      "title": "Zero timeout is rejected",
+      "instance": {
+        "tool_id": "tool.example.instant",
+        "version": "1.0.0",
+        "name": "Instant tool",
+        "source": {"kind": "repository", "locator": "tools/instant", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 0,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T9C",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "source provenance requires kind, locator and license",
+      "title": "Missing provenance license is rejected",
+      "instance": {
+        "tool_id": "tool.example.unlicensed",
+        "version": "1.0.0",
+        "name": "Unlicensed tool",
+        "source": {"kind": "repository", "locator": "tools/unlicensed"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T9D",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "CLASS-7 does not exist; P14 reuses the P11 CLASS-0..CLASS-6 scale only",
+      "title": "Parallel risk scale is rejected",
+      "instance": {
+        "tool_id": "tool.example.class_seven",
+        "version": "1.0.0",
+        "name": "Class seven tool",
+        "source": {"kind": "repository", "locator": "tools/class_seven", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PROCESS_EXEC"],
+        "risk_class": "CLASS-7",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T9E",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "CAP_PACKAGE_REMOVE is DEFERRED/RESTRICTED per P10 and is not selectable in P14",
+      "title": "Deferred capability is rejected",
+      "instance": {
+        "tool_id": "tool.example.pkg_remove",
+        "version": "1.0.0",
+        "name": "Package remover",
+        "source": {"kind": "package-registry", "locator": "allowlist:pkg-config", "license": "GPL-2.0-or-later"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": ["CAP_PACKAGE_REMOVE"],
+        "risk_class": "CLASS-4",
+        "execution_authority": "package",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 600,
+        "resource_limits": {"cpu_seconds": 300, "memory_mb": 1024, "output_bytes": 131072, "process_count": 8, "file_descriptors": 128},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-T9F",
+      "schema": "tool-schema.yaml",
+      "expect": "invalid",
+      "reason": "capability_refs cannot be empty: a Tool must declare at least one descriptive capability reference",
+      "title": "Empty capability references are rejected",
+      "instance": {
+        "tool_id": "tool.example.uncapable",
+        "version": "1.0.0",
+        "name": "Uncapable tool",
+        "source": {"kind": "repository", "locator": "tools/uncapable", "license": "Apache-2.0"},
+        "integrity": {"algorithm": "sha256", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", "pinning": "IMMUTABLE"},
+        "capability_refs": [],
+        "risk_class": "CLASS-2",
+        "execution_authority": "process",
+        "action_type": "tool.call",
+        "trust_level": "semi_trusted",
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object"},
+        "timeout_seconds": 30,
+        "resource_limits": {"cpu_seconds": 10, "memory_mb": 256, "output_bytes": 65536, "process_count": 1, "file_descriptors": 32},
+        "evidence_requirements": ["p9_action_id"],
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S01",
+      "schema": "skill-schema.yaml",
+      "expect": "valid",
+      "title": "Two-step linear skill with a literal then a step-output binding",
+      "instance": {
+        "skill_id": "skill.example.repo_audit",
+        "version": "1.0.0",
+        "name": "Repository audit",
+        "description": "Reads repository status, then reads one workspace file selected from the previous step output.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "literal", "value": ".", "type": "string", "required": true}
+            ]
+          },
+          {
+            "step_id": "step-02",
+            "name": "Read one workspace file",
+            "depends_on": "step-01",
+            "tool": {"tool_id": "tool.example.fs_read", "version": "2.1.0", "hash": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"},
+            "capability_refs": ["CAP_FS_READ"],
+            "risk_class": "CLASS-1",
+            "input_bindings": [
+              {"target_input": "path", "source": "step_output", "from_step": "step-01", "output_path": "status.path", "type": "string", "required": true}
+            ]
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash", "verifier_evidence_ref"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S02",
+      "schema": "skill-schema.yaml",
+      "expect": "valid",
+      "title": "Single-step skill",
+      "instance": {
+        "skill_id": "skill.example.status_only",
+        "version": "0.1.0",
+        "name": "Status only",
+        "description": "A single read-only step.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "literal", "value": ".", "type": "string", "required": true}
+            ],
+            "resource_limits": {"cpu_seconds": 5, "memory_mb": 256, "output_bytes": 32768, "process_count": 1, "file_descriptors": 16}
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S90",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "a Skill with no steps is not a procedure",
+      "title": "Empty step list is rejected",
+      "instance": {
+        "skill_id": "skill.example.empty",
+        "version": "1.0.0",
+        "name": "Empty skill",
+        "description": "Declares no steps.",
+        "risk_class": "CLASS-0",
+        "trust_level": "semi_trusted",
+        "steps": [],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S91",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "a step may not pin the tool version 'latest'",
+      "title": "Floating step tool version is rejected",
+      "instance": {
+        "skill_id": "skill.example.floating_step",
+        "version": "1.0.0",
+        "name": "Floating step",
+        "description": "Pins a floating tool version.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "latest", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S92",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "the pinned tool hash is 63 hex characters; a mismatch or malformed pin is BLOCKED",
+      "title": "Malformed pinned hash is rejected",
+      "instance": {
+        "skill_id": "skill.example.bad_pin",
+        "version": "1.0.0",
+        "name": "Bad pin",
+        "description": "Pins a malformed hash.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S93",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "on_step_failure must be BLOCKED; there is no skip/continue semantics",
+      "title": "Continue-on-failure is rejected",
+      "instance": {
+        "skill_id": "skill.example.continue_on_failure",
+        "version": "1.0.0",
+        "name": "Continue on failure",
+        "description": "Attempts to continue after a failed step.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "CONTINUE",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S94",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "fallback must be NONE; there is no alternate tool or version substitution",
+      "title": "Version fallback is rejected",
+      "instance": {
+        "skill_id": "skill.example.fallback",
+        "version": "1.0.0",
+        "name": "Fallback skill",
+        "description": "Attempts a fallback tool version.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NEXT_VERSION",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S95",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "every step must declare depends_on (null for the first step)",
+      "title": "Missing depends_on is rejected",
+      "instance": {
+        "skill_id": "skill.example.missing_depends",
+        "version": "1.0.0",
+        "name": "Missing depends_on",
+        "description": "Omits the depends_on field.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S96",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "source must be literal or step_output; there is no template or expression source",
+      "title": "Template binding is rejected",
+      "instance": {
+        "skill_id": "skill.example.template_binding",
+        "version": "1.0.0",
+        "name": "Template binding",
+        "description": "Uses a template binding source.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "template", "value": "${env.PWD}", "type": "string", "required": true}
+            ]
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S97",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "a literal binding must carry its value",
+      "title": "Literal binding without a value is rejected",
+      "instance": {
+        "skill_id": "skill.example.valueness_literal",
+        "version": "1.0.0",
+        "name": "Valueless literal",
+        "description": "Declares a literal binding with no value.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "literal", "type": "string", "required": true}
+            ]
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S98",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "unknown property runtime is rejected; no Skill runtime is declared in P14",
+      "title": "Runtime field is rejected",
+      "instance": {
+        "skill_id": "skill.example.with_runtime",
+        "version": "1.0.0",
+        "name": "Skill with runtime",
+        "description": "Attempts to declare a runtime.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "runtime": {"engine": "python"},
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S99",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "CAP_SKILL_EXEC does not exist; Skills do not introduce new capability identifiers",
+      "title": "Invented skill capability is rejected",
+      "instance": {
+        "skill_id": "skill.example.skill_capability",
+        "version": "1.0.0",
+        "name": "Skill capability",
+        "description": "Invents a capability identifier.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_SKILL_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9A",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "skill version must be semver",
+      "title": "Two-part skill version is rejected",
+      "instance": {
+        "skill_id": "skill.example.short_version",
+        "version": "1.0",
+        "name": "Short version",
+        "description": "Declares a two-part version.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9B",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "step identifiers use the step-NN form",
+      "title": "Malformed step identifier is rejected",
+      "instance": {
+        "skill_id": "skill.example.bad_step_id",
+        "version": "1.0.0",
+        "name": "Bad step id",
+        "description": "Declares a malformed step identifier.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-1",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9C",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "automatic retry is forbidden; a retry must be a new, separately authorized P9 Action",
+      "title": "Automatic retry is rejected",
+      "instance": {
+        "skill_id": "skill.example.auto_retry",
+        "version": "1.0.0",
+        "name": "Auto retry",
+        "description": "Declares automatic retries.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "AUTO",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9D",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "the resource budget must be complete: output_bytes is missing",
+      "title": "Incomplete resource budget is rejected",
+      "instance": {
+        "skill_id": "skill.example.partial_budget",
+        "version": "1.0.0",
+        "name": "Partial budget",
+        "description": "Declares an incomplete budget.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9E",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "trust_level uses the existing trust vocabulary",
+      "title": "Unknown trust level is rejected",
+      "instance": {
+        "skill_id": "skill.example.super_trusted",
+        "version": "1.0.0",
+        "name": "Super trusted",
+        "description": "Declares a parallel trust level.",
+        "risk_class": "CLASS-2",
+        "trust_level": "super_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9F",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "the skill identifier is a lower-case dotted identifier",
+      "title": "Upper-case skill identifier is rejected",
+      "instance": {
+        "skill_id": "Skill.Example.Upper",
+        "version": "1.0.0",
+        "name": "Upper case",
+        "description": "Declares an upper-case identifier.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-S9G",
+      "schema": "skill-schema.yaml",
+      "expect": "invalid",
+      "reason": "evidence requirements cannot be empty",
+      "title": "Empty evidence requirements are rejected",
+      "instance": {
+        "skill_id": "skill.example.no_evidence",
+        "version": "1.0.0",
+        "name": "No evidence",
+        "description": "Declares no evidence requirements.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": [],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    }
+  ],
+  "invariant_cases": [
+    {
+      "id": "EX-P14-I01",
+      "schema": "skill-schema.yaml",
+      "expect": "pass",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "The documented two-step skill satisfies every non-schema invariant",
+      "instance_ref": "EX-P14-S01"
+    },
+    {
+      "id": "EX-P14-I02",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "step_ids_unique",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "Duplicate step identifiers are a contract violation (JSON Schema cannot express uniqueness)",
+      "instance": {
+        "skill_id": "skill.example.duplicate_steps",
+        "version": "1.0.0",
+        "name": "Duplicate steps",
+        "description": "Reuses a step identifier.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          },
+          {
+            "step_id": "step-01",
+            "name": "Read one workspace file",
+            "depends_on": "step-01",
+            "tool": {"tool_id": "tool.example.fs_read", "version": "2.1.0", "hash": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"},
+            "capability_refs": ["CAP_FS_READ"],
+            "risk_class": "CLASS-1",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I03",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "linear_chain",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A step that depends on a non-adjacent step breaks the linear rule",
+      "instance": {
+        "skill_id": "skill.example.skipping",
+        "version": "1.0.0",
+        "name": "Skipping chain",
+        "description": "Depends on a non-adjacent step.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          },
+          {
+            "step_id": "step-02",
+            "name": "Read one workspace file",
+            "depends_on": "step-01",
+            "tool": {"tool_id": "tool.example.fs_read", "version": "2.1.0", "hash": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"},
+            "capability_refs": ["CAP_FS_READ"],
+            "risk_class": "CLASS-1",
+            "input_bindings": []
+          },
+          {
+            "step_id": "step-03",
+            "name": "Read repository status again",
+            "depends_on": "step-01",
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I04",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "risk_bound",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A skill declared lower than its highest step risk is a contract violation",
+      "instance": {
+        "skill_id": "skill.example.understated_risk",
+        "version": "1.0.0",
+        "name": "Understated risk",
+        "description": "Declares CLASS-1 while a step declares CLASS-3.",
+        "risk_class": "CLASS-1",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Allowlisted read-only fetch",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.net_read", "version": "1.2.3", "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+            "capability_refs": ["CAP_NETWORK_READ"],
+            "risk_class": "CLASS-3",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I05",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "binding_order",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A step that binds its own output is not a backward binding",
+      "instance": {
+        "skill_id": "skill.example.self_binding",
+        "version": "1.0.0",
+        "name": "Self binding",
+        "description": "Binds its own output into its own input.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "step_output", "from_step": "step-01", "output_path": "status.path", "type": "string", "required": true}
+            ]
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I06",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "binding_order",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A forward binding into a later step is a contract violation",
+      "instance": {
+        "skill_id": "skill.example.forward_binding",
+        "version": "1.0.0",
+        "name": "Forward binding",
+        "description": "Binds a later step output into an earlier step.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "step_output", "from_step": "step-02", "output_path": "content_ref", "type": "string", "required": true}
+            ]
+          },
+          {
+            "step_id": "step-02",
+            "name": "Read one workspace file",
+            "depends_on": "step-01",
+            "tool": {"tool_id": "tool.example.fs_read", "version": "2.1.0", "hash": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"},
+            "capability_refs": ["CAP_FS_READ"],
+            "risk_class": "CLASS-1",
+            "input_bindings": []
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I07",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "literal_type_match",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A literal value whose JSON type differs from the declared type is a contract violation",
+      "instance": {
+        "skill_id": "skill.example.type_mismatch",
+        "version": "1.0.0",
+        "name": "Type mismatch",
+        "description": "Declares an integer literal that is not an integer.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "depth", "source": "literal", "value": "not-an-integer", "type": "integer", "required": true}
+            ]
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I08",
+      "schema": "skill-schema.yaml",
+      "expect": "fail",
+      "violates": "step_limits_within_budget",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "Step limits that exceed the skill budget are a contract violation",
+      "instance": {
+        "skill_id": "skill.example.over_budget_step",
+        "version": "1.0.0",
+        "name": "Over budget step",
+        "description": "Declares a step limit above the skill budget.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [],
+            "resource_limits": {"cpu_seconds": 3600, "memory_mb": 256, "output_bytes": 32768, "process_count": 1, "file_descriptors": 16}
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    },
+    {
+      "id": "EX-P14-I09",
+      "schema": "skill-schema.yaml",
+      "expect": "pass",
+      "invariants": ["linear_chain", "step_ids_unique", "risk_bound", "binding_order", "literal_type_match", "step_limits_within_budget"],
+      "title": "A single-step skill with an equal risk bound satisfies every invariant",
+      "instance": {
+        "skill_id": "skill.example.minimal",
+        "version": "1.0.0",
+        "name": "Minimal skill",
+        "description": "A single bounded step.",
+        "risk_class": "CLASS-2",
+        "trust_level": "semi_trusted",
+        "steps": [
+          {
+            "step_id": "step-01",
+            "name": "Read repository status",
+            "depends_on": null,
+            "tool": {"tool_id": "tool.example.repo_status", "version": "1.0.0", "hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+            "capability_refs": ["CAP_PROCESS_EXEC"],
+            "risk_class": "CLASS-2",
+            "input_bindings": [
+              {"target_input": "path", "source": "literal", "value": ".", "type": "string", "required": true},
+              {"target_input": "recursive", "source": "literal", "value": false, "type": "boolean", "required": false},
+              {"target_input": "max_depth", "source": "literal", "value": 3, "type": "integer", "required": false}
+            ],
+            "resource_limits": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64}
+          }
+        ],
+        "resource_budget": {"cpu_seconds": 20, "memory_mb": 512, "output_bytes": 131072, "process_count": 2, "file_descriptors": 64},
+        "evidence_requirements": ["p9_action_id", "p9_result_hash"],
+        "on_step_failure": "BLOCKED",
+        "fallback": "NONE",
+        "retry": "NONE",
+        "deterministic": true
+      }
+    }
+  ]
+}

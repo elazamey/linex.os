@@ -161,8 +161,10 @@ No cycles, no UI→sudo, no LLM→shell, no Agent→prod DB direct, no MCP→unr
 
 P9's immediate next phase was P10 Execution Authority Contracts, which are now recorded in
 `execution-authority.md` and ADR 0008. P11 Policy Engine and P12 Capability Registry followed.
-The current contract phase is P13 Agent Runtime (accepted by ADR 0012); the authoritative next
-phase is P14 Tool + Skill Contract, per `docs/architecture/roadmap.md`.
+P13 Agent Runtime followed (accepted by ADR 0012). The current contract phase is P14 Tool + Skill
+Contract, which is IN PROGRESS and contracts-only: its contracts, schemas, fixtures, vectors,
+tests, and verifier are authored, JSON Schema validation passes locally with the approved
+hash-pinned validator, and the remaining gate is the corresponding remote CI run per `docs/architecture/roadmap.md` and ADR 0013.
 
 ## References
 
@@ -201,3 +203,37 @@ P13 deliverables:
 The vectors and checks verify contract presence and consistency only; they do not simulate an
 Agent Runtime, prove immutable deployed storage, or constitute production verification. P14
 Tool + Skill Contract is next; technology selection remains reserved for P18.
+
+## P14 — Tool + Skill Contract (IN PROGRESS; contracts only, not COMPLETE)
+
+P14 specifies a versioned, immutable **Tool** declaration bound to exactly one P10 executor
+authority, and a **Skill** as an ordered, linear composition of pinned Tools. It consumes P9
+Action/Result/Event contracts (including the `tool.call`, `skill.exec`, and `parent_action_id`
+fields), P10 Execution Authority, P11 decisions and `CLASS-0`…`CLASS-6`, P12 capability grants
+and delegation, and the P13 Agent boundary. It redefines none of them.
+
+Core rules: `capability_refs` are descriptive references, not grants; every step is a separate
+P9 `tool.call` Action requiring a **fresh** P11 decision and an **independent** P12 check before
+P10; `ALLOW` for one step never authorizes another; versions are semver and hashes are pinned
+with **no fallback to `latest`** and no in-place mutation of a published version; limits and
+timeout are mandatory; a limit breach yields `RESOURCE_EXCEEDED` with limit evidence; risk reuses
+the P11 scale and is never lowered by declaration (`CLASS-6` is `DENY Always`); registry writes
+require explicit P12 delegation plus a fresh P11 decision with no self-grant and no invented
+`CAP_*`; linear typed bindings only, with no DSL, expression evaluation, orchestration engine, or
+implementation language before P18; evidence stays P9's, storage is P15's, verification is P16's,
+and a hash is an integrity check, not a signature.
+
+P14 deliverables:
+
+- `tool.md` — Tool Contract (descriptor, provenance, pinning, per-step execution path, limits, registry governance)
+- `skill.md` — Skill Contract (linear steps, per-step authorization, typed bindings, failure semantics, invocation flow)
+- `tool-schema.yaml`, `skill-schema.yaml` — JSON Schema draft 2020-12 declarations (JSON-compatible YAML, no YAML parser dependency)
+- `tool-skill-examples.yaml` — valid/invalid schema fixtures plus non-schema invariant fixtures
+- `tool-skill-acceptance-tests.yaml` — fourteen structured acceptance vectors covering the mandated scenarios
+- `../architecture/adr/0013-tool-skill-contract.md` — accepted contract decision and the evaluated validator options
+- `../../tests/tool-skill.test.sh` — 40/40 local contract checks including JSON Schema meta-schema and valid/invalid instance validation (the group reports BLOCKED, never PASS, when no validator is installed)
+- `../../ops/verify/verify-tool-skill.sh` — contract verifier; 17/17 local PASS with the validator, exits 2 (BLOCKED) while schema validation is unavailable
+
+The vectors and checks verify contract presence, schema validity, and the documented invariants.
+They do not implement or simulate a Tool or Skill runtime, do not prove an execution sandbox or
+production behaviour, and are not production verification.
