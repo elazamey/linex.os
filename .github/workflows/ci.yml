@@ -331,9 +331,9 @@ jobs:
           ./ops/bootstrap/bootstrap.sh
           ./ops/verify/verify-environment.sh
 
-  # Job 5: contract tests (P4 and P6)
+  # Job 5: contract tests (P4, P6, P13)
   contract-tests:
-    name: "Job 5: Contract Tests (P4, P6)"
+    name: "Job 5: Contract Tests (P4, P6, P13)"
     runs-on: ubuntu-latest
     needs: toolchain-tests
     permissions:
@@ -417,6 +417,16 @@ jobs:
           ./ops/security/tests/agent-contract.test.sh
           echo "P6: 15/15 expected"
 
+      - name: Agent Runtime contract tests and verification (P13)
+        run: |
+          echo "=== Agent Runtime contract tests and verification (P13) ==="
+          command -v jq
+          jq --version
+          chmod +x tests/agent-runtime.test.sh ops/verify/verify-agent-runtime.sh
+          ./tests/agent-runtime.test.sh
+          ./ops/verify/verify-agent-runtime.sh
+          echo "P13: contracts and acceptance vectors verified; no Agent Runtime is implemented"
+
   # Job 6: doctor/final verification
   doctor-final:
     name: "Job 6: Doctor / Final Verification (P7)"
@@ -450,6 +460,8 @@ jobs:
           ./ops/linux/tests/toolchain.test.sh 2>&1 | tail -5
           ./ops/powershell/tests/powershell-install.test.sh 2>&1 | tail -5
           ./ops/security/tests/agent-contract.test.sh 2>&1 | tail -5
+          ./tests/agent-runtime.test.sh 2>&1 | tail -8
+          ./ops/verify/verify-agent-runtime.sh 2>&1 | tail -8
           ./scripts/doctor.sh 2>&1 | tail -30
 
       - name: Generate verification summary (artifact, no secrets)
@@ -521,6 +533,7 @@ jobs:
           echo "P5: PASS"
           echo "P6: PASS (15/15)"
           echo "P7: PASS (doctor, secret-scan, static-security-check)"
+          echo "P13: PASS (Agent Runtime contract + structured acceptance vectors; contract-only)"
           echo ""
           echo "FOUNDATION STATUS: PASS WITH KNOWN BLOCKER"
           echo "KNOWN BLOCKER: P4 PowerShell / Arena Network"
@@ -531,4 +544,4 @@ jobs:
           echo "REMOTE CI: This run is REMOTE CI VERIFIED (on GitHub Actions)"
           echo "LOCAL ARENA: PASS WITH ONE ENVIRONMENT BLOCKER (P3 pkg-config, doctor exit 3) - see docs/reports/"
           echo ""
-          echo "NEXT: P13 Agent Runtime Contract (contracts only) - P8-P12 COMPLETE, see docs/architecture/roadmap.md"
+          echo "NEXT: P14 Tool + Skill Contract (contracts only) - P8-P13 COMPLETE, see docs/architecture/roadmap.md"

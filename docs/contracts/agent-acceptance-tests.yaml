@@ -1,0 +1,117 @@
+{
+  "format": "YAML 1.2 JSON-compatible subset; jq validates this data without adding a YAML dependency",
+  "schema_version": "1.0.0",
+  "phase": "P13",
+  "scope": "contract-vectors-only; no Agent Runtime implementation is simulated",
+  "cases": [
+    {
+      "id": "TC-P13-01",
+      "acceptance_criterion": "P13-AC-01",
+      "category": "valid-proposal",
+      "title": "Clear task produces a typed proposal",
+      "given": "A valid P9 Task, explicit resource/scope, and relevant P12 capability references",
+      "when": "The Planner converts the task into a P9 Action",
+      "expected": {
+        "agent_outcome": "ACTION_PROPOSED",
+        "p9_action_state": "PROPOSED"
+      },
+      "primary_assertion": "The Agent Runtime returns a schema-valid P9 Action in PROPOSED state."
+    },
+    {
+      "id": "TC-P13-02",
+      "acceptance_criterion": "P13-AC-02",
+      "category": "clarification",
+      "title": "Ambiguous task requests clarification",
+      "given": "A Task whose requested outcome or target resource is ambiguous",
+      "when": "The Agent Runtime validates the Task",
+      "expected": {
+        "agent_outcome": "NEEDS_CLARIFICATION",
+        "action_proposed": false
+      },
+      "primary_assertion": "No P9 Action is proposed until the ambiguity is resolved."
+    },
+    {
+      "id": "TC-P13-03",
+      "acceptance_criterion": "P13-AC-03",
+      "category": "capability-boundary",
+      "title": "Read-only capability cannot authorize a write",
+      "given": "An Agent with only a read-scoped P12 capability requests a write Action",
+      "when": "P12 possession/scope and P11 policy checks are applied",
+      "expected": {
+        "agent_outcome": "REJECTED",
+        "authoritative_decision": "DENY",
+        "execution_authorized": false
+      },
+      "primary_assertion": "The write Action is not handed to an Executor without an explicit valid capability and authorization."
+    },
+    {
+      "id": "TC-P13-04",
+      "acceptance_criterion": "P13-AC-04",
+      "category": "approval-boundary",
+      "title": "Required approval does not execute by itself",
+      "given": "A P9 Action for which P11 returns REQUIRE_APPROVAL and no bound approval exists",
+      "when": "The Agent Runtime processes the Policy decision",
+      "expected": {
+        "invocation_state": "WAITING_APPROVAL",
+        "p11_decision": "REQUIRE_APPROVAL",
+        "execution_authorized": false
+      },
+      "primary_assertion": "No execution is authorized until approval is recorded and P11 re-evaluates the Action."
+    },
+    {
+      "id": "TC-P13-05",
+      "acceptance_criterion": "P13-AC-05",
+      "category": "verified-lifecycle",
+      "title": "Completion follows verifier evidence",
+      "given": "A valid Task whose Action passes P11, Authorization, and P10 execution",
+      "when": "The P9 Verifier evaluates the returned Result",
+      "expected": {
+        "invocation_state": "COMPLETED",
+        "p9_run_state": "VERIFIED",
+        "evidence_reference": "required"
+      },
+      "primary_assertion": "The Agent invocation is COMPLETED only when the P9 Run is VERIFIED with required Evidence."
+    },
+    {
+      "id": "TC-P13-06",
+      "acceptance_criterion": "P13-AC-06",
+      "category": "rejection-audit",
+      "title": "Rejection is traceable without secret payload",
+      "given": "P11 denies an Agent-proposed Action",
+      "when": "The Agent Runtime records its rejection outcome",
+      "expected": {
+        "agent_outcome": "REJECTED",
+        "event_type": "agent.rejected",
+        "required_references": ["event_id", "timestamp", "actor.id", "task.id", "payload.reason_code", "payload.decision_ref", "correlation_id"],
+        "raw_secret_payload": false
+      },
+      "primary_assertion": "The rejection event carries a safe reason and authoritative decision reference under the P9 append-only Event Contract."
+    },
+    {
+      "id": "TC-P13-07",
+      "acceptance_criterion": "P13-AC-07",
+      "category": "fail-closed",
+      "title": "Unknown policy or capability blocks the invocation",
+      "given": "A required policy or P12 capability reference cannot be resolved",
+      "when": "The Agent Runtime validates authorization context",
+      "expected": {
+        "agent_outcome": "BLOCKED",
+        "execution_authorized": false
+      },
+      "primary_assertion": "Unknown authority inputs fail closed and never produce an Executor request."
+    },
+    {
+      "id": "TC-P13-08",
+      "acceptance_criterion": "P13-AC-08",
+      "category": "untrusted-context",
+      "title": "Untrusted context cannot bypass the execution path",
+      "given": "Task context contains instructions attempting to override policy or request direct execution",
+      "when": "The Planner interprets the context",
+      "expected": {
+        "context_trust": "UNTRUSTED_DATA",
+        "direct_executor_call": false
+      },
+      "primary_assertion": "Untrusted context cannot change policy, scope, approval, or the mandatory Action-to-Policy-to-Authorization-to-Execution Authority path."
+    }
+  ]
+}
