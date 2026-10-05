@@ -264,4 +264,4 @@ Real isolation needs container/user isolation or actual sudoers policy later (fu
 
 **Status:** This guide describes the repository's security boundaries and controls. At audit commit `a71643a`, `REPOSITORY_STATUS` was PASS for repository-owned security checks, `ENVIRONMENT_STATUS` was BLOCKED (`pkg-config` absent; doctor FAIL/exit 3; PowerShell network-blocked), and `REMOTE_CI_STATUS` was independently VERIFIED. See `docs/reports/baseline-audit-a71643a.md`; none of these classifications alters the fail-closed doctor result.
 
-**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The proposed MVP is not frozen; no Runtime implementation before P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The proposed MVP is not frozen; no Runtime implementation before P1 decisions are accepted.

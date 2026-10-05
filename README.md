@@ -1,6 +1,6 @@
 # LINEX.OS
 
-> **Agent Operating System — P0 baseline reconciliation in progress; P1 MVP definition is next (no product/runtime implementation)**
+> **Agent Operating System — P0 baseline reconciliation complete; P1 MVP definition is next (no product/runtime implementation)**
 
 LINEX.OS is being built as a disciplined, verifiable **Agent OS** — not a random collection of scripts. The project establishes a clear execution contract for AI agents (Arena) with fail-closed policy, structured privilege gate, and evidence-based verification before any product code.
 
@@ -28,7 +28,7 @@ The active delivery order is recorded in `docs/architecture/roadmap.md`:
 
 | Phase | Scope | Position / gate |
 |---|---|---|
-| P0 | Baseline reconciliation | In progress: documentation-only reconciliation, baseline tests, evidence, and a separate PR; repository, environment, and remote CI stay separate. |
+| P0 | Baseline reconciliation | COMPLETE — documentation-only reconciliation, baseline tests, evidence, and PR #4 open; repository, environment, and remote CI stay separate. |
 | P1 | MVP Definition + ADRs | Next: establish the MVP and ADR decisions for language, storage, isolation boundary, execution model, evidence model, and failure semantics. |
 | P2 | P9 Runtime Core | Gated on P1 decisions; contracts/core work only as authorized by the roadmap. |
 | P3 | P11/P12 Policy + Capability | Follow P2; fail-closed policy and capability behavior. |
@@ -239,7 +239,7 @@ INSPECT → PLAN → CHANGE → TEST → VERIFY → REPORT
 **Active phase order (P0–P6):**
 
 ```
-P0 Baseline Reconciliation → current; document evidence and verify without masking environment blockers
+P0 Baseline Reconciliation → COMPLETE; documentation-only, evidence and validation recorded; PR #4 open
   ↓
 P1 MVP Definition + ADRs → next; decide language, storage, isolation, execution, evidence, and failure semantics
   ↓
@@ -393,7 +393,7 @@ linex.os/
 └── .gitignore                  # Excludes .env, secrets, logs, build artifacts, OS junk
 ```
 
-**Current phase:** P0 Baseline Reconciliation is in progress; P1 MVP Definition + ADRs is next. No Runtime implementation before P1 decisions are accepted. Legacy contract numbers (P9–P14) are retained to identify existing artifacts, not as the active phase order. See `docs/architecture/roadmap.md`.
+**Current phase:** P0 Baseline Reconciliation is complete (PR #4 open); P1 MVP Definition + ADRs is next. No Runtime implementation before P1 decisions are accepted. Legacy contract numbers (P9–P14) are retained to identify existing artifacts, not as the active phase order. See `docs/architecture/roadmap.md`.
 
 ---
 
@@ -441,6 +441,6 @@ linex.os/
 
 ---
 
-**Status:** P0 baseline reconciliation is in progress; no product/runtime implementation has started. At baseline commit `a71643a`, `REPOSITORY_STATUS: PASS`, `ENVIRONMENT_STATUS: BLOCKED`, and `REMOTE_CI_STATUS: VERIFIED` are reported separately in `docs/reports/baseline-audit-a71643a.md`.
+**Status:** P0 baseline reconciliation is complete (PR #4 open); no product/runtime implementation has started. At baseline commit `a71643a`, `REPOSITORY_STATUS: PASS`, `ENVIRONMENT_STATUS: BLOCKED`, and `REMOTE_CI_STATUS: VERIFIED` are reported separately in `docs/reports/baseline-audit-a71643a.md`.
 
-**Next:** Complete and validate P0, then begin P1 MVP Definition + ADRs. The MVP scope remains a proposal until P1 decisions are recorded; do not implement Runtime before those ADRs are accepted.
+**Next:** P1 MVP Definition + ADRs. The MVP scope remains a proposal until P1 decisions are recorded; do not implement Runtime before those ADRs are accepted.

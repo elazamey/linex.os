@@ -125,4 +125,4 @@ LICENSE is currently PENDING OWNER DECISION (placeholder). Don't guess MIT/Apach
 
 **Status:** Contribution workflow and evidence rules. The active phase ledger is `docs/architecture/roadmap.md`; at baseline commit `a71643a`, repository status was PASS, environment status BLOCKED, and remote CI VERIFIED. Product/runtime implementation has not started.
 
-**Next:** Finish P0 reconciliation, then P1 MVP Definition + ADRs. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.

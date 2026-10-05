@@ -320,4 +320,4 @@ bash -n $(find ops scripts .github -name "*.sh" -type f)
 
 **Status:** This guide documents operational procedures; its historical P5 component labels are superseded for phase sequencing by the current roadmap and commit-scoped reports. At baseline commit `a71643a`, `REPOSITORY_STATUS` was PASS for repository-owned security/contract checks, `ENVIRONMENT_STATUS` was BLOCKED (missing `pkg-config`, doctor FAIL/exit 3, approved apt remediation unavailable), and `REMOTE_CI_STATUS` was independently VERIFIED.
 
-**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.

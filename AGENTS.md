@@ -19,7 +19,7 @@
 
 **Active phase authority:**
 - Follow the approved P0-P6 sequence in `docs/architecture/roadmap.md`; historical P1-P18 artifact labels are not the active order.
-- P0 Baseline Reconciliation is current. P1 MVP Definition + ADRs is next; P1 must establish language, storage, isolation boundary, execution model, evidence model, and failure semantics before P2 Runtime Core work.
+- P0 Baseline Reconciliation is complete (PR #4 open). P1 MVP Definition + ADRs is next; P1 must establish language, storage, isolation boundary, execution model, evidence model, and failure semantics before P2 Runtime Core work.
 - The proposed MVP scope (Linux CLI/local process, Planner → structured actions, Mock Authority then Safe Local Authority, fail-closed policy, explicit/scoped/expiring capabilities, append-only evidence, no Agent → shell; MCP/browser/GUI/default network/production deployment outside scope) is a proposal for P1, not a frozen architecture.
 - Keep ADR 0011 and older ADRs historically accurate. P1 must explicitly amend, supersede, or reaffirm relevant decisions through ADRs; do not silently reinterpret them.
 
@@ -571,6 +571,6 @@ After creating AGENTS.md and ARENA.md, check:
 
 **Status:** This agent contract originated under the legacy P6 label and continues to govern repository work. The label is historical; this is a policy/documentation contract, not product Runtime implementation.
 
-**Next:** Complete P0 reconciliation, then proceed to P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.
+**Next:** Proceed to P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.
 
 **Reference:** This file is constitution — Arena must LOAD CONTRACT at start of every task (per ARENA.md operating loop).

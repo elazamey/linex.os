@@ -221,4 +221,4 @@ Environment, branch, remote, and CI state are time-sensitive. Use the latest com
 
 ---
 
-**Status:** This file defines the inspect → plan → change → test → verify → report workflow. The active phase plan is in `docs/architecture/roadmap.md`; P0 Baseline Reconciliation is current and P1 MVP Definition + ADRs is next. No Runtime implementation before P1 decisions are accepted.
+**Status:** This file defines the inspect → plan → change → test → verify → report workflow. The active phase plan is in `docs/architecture/roadmap.md`; P0 Baseline Reconciliation is complete (PR #4 open) and P1 MVP Definition + ADRs is next. No Runtime implementation before P1 decisions are accepted.

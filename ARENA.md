@@ -483,6 +483,6 @@ P6 must remain repository-only:
 
 **Status:** This Arena operating protocol originated under the legacy P6 label and continues to define role, workspace/repository boundaries, command and privilege rules, approvals, network/Git/testing rules, evidence, stop conditions, and the operating loop.
 
-**Next:** Complete P0 reconciliation, then proceed to P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.
+**Next:** Proceed to P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. The MVP proposal is not frozen; no Runtime implementation before P1 decisions are accepted.
 
 **Important:** Arena must LOAD CONTRACT (README.md, AGENTS.md, ARENA.md) at start of every task — this is step 1 of operating loop.

@@ -11,7 +11,7 @@ accepted.
 
 | Phase | Scope | Gate / position |
 |---|---|---|
-| P0 | Baseline Reconciliation | Current: reconcile live documentation, record separate repository/environment/remote-CI results, validate, and publish a scoped PR. |
+| P0 | Baseline Reconciliation | COMPLETE: reconciled live documentation, recorded separate repository/environment/remote-CI results, validated, and opened PR #4. |
 | P1 | MVP Definition + ADRs | Next: establish MVP boundaries and decide language, storage, isolation boundary, execution model, evidence model, and failure semantics through ADRs. |
 | P2 | P9 Runtime Core | After P1 ADR decisions are accepted; use legacy P9 contracts as inputs and keep implementation within the approved scope. |
 | P3 | P11/P12 Policy + Capability | After P2; reconcile and deliver policy/capability behavior under fail-closed rules. |
@@ -46,9 +46,9 @@ passed. It never meant "implemented".
 - **REMOTE_CI_STATUS: VERIFIED.** GitHub Actions run `37246010719` on `main`, head `a71643a`,
   succeeded in all six jobs. Runner log bodies remain unavailable from Arena; conclusions are
   verified at job granularity.
-- **Active phase position:** P0 Baseline Reconciliation is in progress; P1 MVP Definition + ADRs is
-  next. Legacy P9-P12 contracts are inputs, not the current phase sequence. P1 must establish the
-  required architecture decisions before any Runtime implementation.
+- **Active phase position:** P0 Baseline Reconciliation is complete (PR #4 open); P1 MVP Definition
+  + ADRs is next. Legacy P9-P12 contracts are inputs, not the current phase sequence. P1 must
+  establish the required architecture decisions before any Runtime implementation.
 
 The full commit-scoped evidence and the separate REPOSITORY / ENVIRONMENT / REMOTE CI assessment
 are in `docs/reports/baseline-audit-a71643a.md`. This snapshot does not replace the historical

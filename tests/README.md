@@ -107,4 +107,4 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 **Status:** Test categories and shipped suites are documented. At baseline commit `a71643a`, `REPOSITORY_STATUS: PASS` for repository-owned security/contract verifiers, `ENVIRONMENT_STATUS: BLOCKED` (`pkg-config` missing; doctor FAIL/exit 3), and `REMOTE_CI_STATUS: VERIFIED` (6/6 jobs) are separate; see `docs/reports/baseline-audit-a71643a.md`.
 
-**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.

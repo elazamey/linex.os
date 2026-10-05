@@ -169,4 +169,4 @@ The agent operating contract was delivered under the legacy P6 label through `AG
 
 **Status:** Vision and project constraints are subject to the active P1 MVP ADRs; current phase and baseline measurements are delegated to `docs/architecture/roadmap.md` and commit-scoped reports. No Runtime implementation has started.
 
-**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs. The proposed MVP is not frozen, and Runtime implementation remains prohibited until the P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs. The proposed MVP is not frozen, and Runtime implementation remains prohibited until the P1 decisions are accepted.

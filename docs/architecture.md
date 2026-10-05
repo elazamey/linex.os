@@ -922,4 +922,4 @@ P8 repository-only, no apt, sudo, systemctl, user/group, firewall, disk, boot, P
 
 **Status:** This is the legacy P8 architecture design record. It is retained as historical input, not treated as a frozen MVP; P1 ADRs must review and reconcile it. This document contains no Runtime implementation; current repository, environment, and remote-CI evidence is in commit-scoped reports.
 
-**Next:** Complete P0 reconciliation, then P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.
+**Next:** P1 MVP Definition + ADRs per `docs/architecture/roadmap.md`. No Runtime implementation before P1 decisions are accepted.
