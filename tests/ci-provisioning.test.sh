@@ -65,6 +65,45 @@ for workflow in ci.yml ci-debug.yml; do
     'bash tests/ci-provisioning.test.sh'
 done
 
+# A plain (unquoted) `name:` scalar containing ": " is invalid YAML. GitHub then
+# reports "This run likely failed because of a workflow file issue" with zero jobs:
+# the run never starts, no job-level check can see it, and no shell linter catches it.
+# Not hypothetical - it happened to a parallel W2 PR (run 37274775844). Quoted name
+# values may contain ": " legitimately; anything else must not.
+name_scalars_are_valid() {
+  local file
+  (( $# > 0 )) || return 1
+  for file in "$@"; do [[ -f "$file" && -r "$file" ]] || return 1; done
+  awk -v q="'" '
+    /^[[:space:]]*(-[[:space:]]+)?name:[[:space:]]+/ {
+      line = $0
+      sub(/^[[:space:]]*(-[[:space:]]+)?name:[[:space:]]+/, "", line)
+      first = substr(line, 1, 1)
+      if (first == "\"" || first == q) next
+      if (index(line, ": ") > 0) {
+        printf "%s:%d: unquoted \": \" in a name scalar: %s\n", FILENAME, FNR, $0
+        bad = 1
+      }
+    }
+    END { exit bad }
+  ' "$@"
+}
+check 'all workflow name scalars are valid YAML' name_scalars_are_valid "${WORKFLOWS[@]}"
+cp "$ROOT_DIR/.github/workflows/ci.yml" "$WORK/mutated-name.yml"
+printf '      - name: %s\n' 'zzz: yyy' >> "$WORK/mutated-name.yml"
+if name_scalars_are_valid "$WORK/mutated-name.yml" > "$WORK/mutation-output" 2>&1; then
+  check 'YAML name-scalar guard rejects an unquoted ": " (mutation)' false
+else
+  check 'YAML name-scalar guard rejects an unquoted ": " (mutation)' true
+fi
+cp "$ROOT_DIR/.github/workflows/ci.yml" "$WORK/mutated-name.yml"
+printf '      - name: %s\n' '"zzz: yyy"' >> "$WORK/mutated-name.yml"
+if name_scalars_are_valid "$WORK/mutated-name.yml" > "$WORK/mutation-output" 2>&1; then
+  check 'quoted name scalars may still contain ": " (positive control)' true
+else
+  check 'quoted name scalars may still contain ": " (positive control)' false
+fi
+
 # Mutation probes never execute the injected text. They prove the same guard
 # rejects a reintroduced bypass in either workflow, including the old inline form.
 for workflow in ci.yml ci-debug.yml; do

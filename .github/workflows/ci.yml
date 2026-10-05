@@ -43,10 +43,13 @@ jobs:
           free -h || true
 
       - name: Bash syntax check (bash -n)
+        # W2 follow-up: tests/ is in the corpus because this workflow executes
+        # tests/*.sh (Job 2 security-validation). A suite the pipeline runs must be
+        # syntax-checked by the pipeline.
         run: |
           echo "=== bash -n ==="
           set -e
-          find ops scripts -type f -name "*.sh" | while read -r f; do
+          find ops scripts tests -type f -name "*.sh" | while read -r f; do
             echo "Checking $f"
             bash -n "$f" && echo "  → PASS" || (echo "  → FAIL" && exit 1)
           done
