@@ -200,6 +200,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: CI provisioning regression tests (W2)
+        run: |
+          bash tests/ci-provisioning.test.sh
+
       - name: Policy check (P2)
         run: |
           echo "=== Policy check (P2) ==="
@@ -304,43 +308,10 @@ jobs:
           fetch-depth: 1
 
       - name: Ensure P3 toolchain baseline (provision, then verify)
-        # CI-H4 (CI hardening, NOT phase P13 - see ADR 0011 D4):
-        # Job 4 used to assume every P3 tool was already on the runner.
-        # toolchain.test.sh is a verification test, so a runner that happens to
-        # lack pkg-config/zip/wget turns P3 into a false FAIL (observed in the
-        # Arena sandbox: 43/44, only pkg-config missing). The runner image is not
-        # part of the LINEX.OS contract, so install the P3 baseline first and let
-        # the test verify it. Single-package installs only - no apt upgrade /
-        # full-upgrade / dist-upgrade (forbidden by ops/security/forbidden-commands.txt).
+        # CI-H4 / W2: preflight, provision through the Gate, then verify.
+        # Explicit execution is confined to the runner; local default is dry-run.
         run: |
-          set -eo pipefail
-          echo "=== Ensure P3 toolchain baseline ==="
-          P3_PKGS="findutils grep sed gawk tar gzip zip unzip curl wget git jq ca-certificates gcc g++ make pkg-config python3"
-          MISSING=""
-          for t in find grep sed awk tar gzip zip unzip curl wget git jq gcc g++ make pkg-config python3; do
-            if ! command -v "$t" >/dev/null 2>&1; then
-              echo "MISSING: $t"
-              MISSING="$MISSING $t"
-            fi
-          done
-          if [ -z "$MISSING" ]; then
-            echo "PASS: every P3 tool already present, nothing to install"
-          else
-            echo "Installing missing P3 baseline via apt-get (no upgrade)"
-            sudo apt-get update -y
-            # shellcheck disable=SC2086
-            sudo apt-get install -y --no-install-recommends $P3_PKGS
-          fi
-          echo "=== Post-install verification ==="
-          for t in find grep sed awk tar gzip zip unzip curl wget git jq gcc g++ make pkg-config python3; do
-            if command -v "$t" >/dev/null 2>&1; then
-              printf '%-14s FOUND %s\n' "$t" "$($t --version 2>&1 | head -1)"
-            else
-              echo "FAIL: $t still missing after provisioning"
-              exit 1
-            fi
-          done
-          echo "P3 toolchain baseline PRESENT"
+          bash ops/ci/provision-toolchain.sh p3 --execute
 
       - name: Toolchain tests (P3)
         run: |

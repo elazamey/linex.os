@@ -24,6 +24,8 @@ ALLOWED_ACTIONS=("check-sudo" "check-package-manager" "package-install" "package
 # - gcc, g++, make, pkg-config, build-essential are required for C/C++ build smoke tests and future build steps
 # - They are official Debian packages, small, non-privileged runtime, no docker/k8s/java/go/rust/dotnet
 # - Only pkg-config is missing in current env, others already VERIFIED but allowlisted for reproducibility
+# W2: python3 is already in the P3 manifest and CI package set; permit its install
+# through this Gate (privilege-policy.md section 5.1), not a direct CI bypass.
 ALLOWED_PACKAGES=(
   "ca-certificates"
   "curl"
@@ -45,6 +47,7 @@ ALLOWED_PACKAGES=(
   "make"
   "pkg-config"
   "build-essential"
+  "python3"
 )
 
 # Allowed services for service-status (read-only)
