@@ -167,7 +167,7 @@ P13 ✅ COMPLETE — Agent Runtime Contract (CONTRACTS ONLY, no implementation)
   - Explicitly NOT delivered: no Agent code, runtime, LLM integration, package install,
     new implementation language, cryptographic audit signing, or production evidence
 
-P14 ◐ IN PROGRESS — Tool + Skill Contract (CONTRACTS ONLY, NOT COMPLETE)
+P14 ✅ COMPLETE — Tool + Skill Contract (CONTRACTS ONLY, no implementation)
   - Tool Contract: ID, semver Version, Input/Output schema, Capability required, Risk class,
     Execution authority, Timeout, Resource limits, Evidence requirements; Unknown Tool → BLOCKED
   - Tool provenance: source, version, hash, version pinning
@@ -184,22 +184,22 @@ P14 ◐ IN PROGRESS — Tool + Skill Contract (CONTRACTS ONLY, NOT COMPLETE)
     linear typed steps only with no DSL, runtime, or expression evaluation before P18;
     registry writes require explicit P12 delegation plus a fresh P11 decision; evidence stays
     P9's, storage is P15's, verification is P16's, and a hash is not a signature
-  - GATES (P14 must not be described as COMPLETE until all close):
+  - GATES (all closed):
     1. CLOSED — JSON Schema validator adoption approved and recorded in ADR 0013:
        jsonschema 4.26.0, test-only, installed from the fully hash-pinned
        ops/ci/requirements-p14-jsonschema.txt into a temporary venv outside the repository
-    2. CLOSED locally — both schemas validate against the official draft 2020-12
-       meta-schema (offline; json-schema.org is blocked in Arena), 8/8 valid fixtures are
-       accepted, 33/33 invalid fixtures are rejected, 9/9 invariant fixtures behave as
-       declared; tests/tool-skill.test.sh 40/40 PASS and ops/verify/verify-tool-skill.sh
-       17/17 PASS (exit 0)
-    3. PENDING — Job 5 and Job 6 of CI run tests/tool-skill.test.sh and
-       ops/verify/verify-tool-skill.sh; P14 becomes COMPLETE only when that remote run is
-       green and this ledger records it
+    2. CLOSED — both schemas validate against the official draft 2020-12 meta-schema
+       (offline; json-schema.org is blocked in Arena), 8/8 valid fixtures are accepted,
+       33/33 invalid fixtures are rejected, 9/9 invariant fixtures behave as declared;
+       tests/tool-skill.test.sh 40/40 PASS and ops/verify/verify-tool-skill.sh 17/17 PASS
+       (exit 0) locally
+    3. CLOSED — remote CI green: Job 5 step "Tool + Skill contract tests and verification
+       (P14)" and Job 6 "Final verification - all layers" both succeeded on run
+       37350172963 (pull_request) and run 37350152975 (push) on this branch
   - Explicitly NOT delivered: no Tool or Skill runtime, no executor, no registry implementation,
     no orchestration engine, no DSL, no package installation, no implementation language
 
-P15 → Memory / State / Event Contracts
+P15 ▶ NEXT — Memory / State / Event Contracts
   - Memory: Ephemeral, Session, Project, User, System with ownership, retention, access policy,
     encryption, deletion
   - Event Store append-only immutable, State Store lifecycle, storage abstraction interfaces

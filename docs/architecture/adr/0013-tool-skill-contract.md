@@ -70,7 +70,7 @@ CI wiring: `ops/ci/requirements-p14-jsonschema.txt` is installed in Job 5 (P14 s
 
 ACCEPTED — P14 Tool + Skill Contract is contracts-only. No Tool or Skill runtime, executor, registry, orchestration engine, DSL, package installation, system change, or implementation-language choice is authorized by this ADR.
 
-P14 is not COMPLETE until: the approved validator is installed with pinned hashes and the schemas pass meta-schema and valid/invalid instance validation (DONE locally 2026-10-05); `tests/tool-skill.test.sh` passes fully (DONE: 40/40); `ops/verify/verify-tool-skill.sh` returns PASS, exit 0 (DONE: 17/17); CI runs both on the remote runner and the run is green (PENDING); and the roadmap records the completed state (pending the green run). Until then the roadmap marks P14 as in progress, never COMPLETE.
+P14 is **COMPLETE as a contracts-only phase** (2026-10-05). All gates closed: the approved validator is installed with pinned hashes and both schemas pass meta-schema and valid/invalid instance validation; `tests/tool-skill.test.sh` passes fully (40/40); `ops/verify/verify-tool-skill.sh` returns PASS, exit 0 (17/17); and CI runs both on the remote runner with a green result — Job 5 step "Tool + Skill contract tests and verification (P14)" and Job 6 "Final verification - all layers" both succeeded on run `37350172963` (pull_request) and run `37350152975` (push). COMPLETE here means contracts, schemas, vectors, and gates only: no Tool or Skill runtime, executor, registry, or production behaviour exists, and none is claimed.
 
 ## References
 

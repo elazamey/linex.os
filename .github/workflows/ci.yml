@@ -575,4 +575,4 @@ jobs:
           echo "REMOTE CI: This run is REMOTE CI VERIFIED (on GitHub Actions)"
           echo "LOCAL ARENA: PASS WITH ONE ENVIRONMENT BLOCKER (P3 pkg-config, doctor exit 3) - see docs/reports/"
           echo ""
-          echo "NEXT: P14 Tool + Skill Contract closes its remaining gates, then P15 Memory/State/Event Contracts - see docs/architecture/roadmap.md"
+          echo "NEXT: P15 Memory/State/Event Contracts (contracts only) - P8-P14 COMPLETE, see docs/architecture/roadmap.md"

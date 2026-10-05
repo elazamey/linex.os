@@ -121,4 +121,4 @@ shellcheck ops/**/*.sh || echo "shellcheck SKIPPED"
 
 **Status:** Foundation test inventory preserved; P13 contract checks are 28/28 locally and verifier checks 11/11. P14 contract checks are 40/40 locally, including JSON Schema draft 2020-12 meta-schema validation and 8/8 valid / 33/33 invalid fixtures against the approved hash-pinned validator (`tests/tool-skill.test.sh`; when no validator is installed that group reports BLOCKED, never PASS). P3/P4 environment blockers remain explicitly distinct from contract-test results; Local PASS ≠ Production PASS.
 
-**Next:** confirm `tests/tool-skill.test.sh` and `ops/verify/verify-tool-skill.sh` on the remote CI runner (Job 5 and Job 6 install the pinned validator from `ops/ci/requirements-p14-jsonschema.txt`).
+**Next:** P15 Memory/State/Event Contracts. P14 contract checks are 40/40 with the pinned validator in Job 5 and Job 6, and both remote runs were green.

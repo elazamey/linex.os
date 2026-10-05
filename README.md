@@ -229,7 +229,7 @@ P12 Capability Registry Contract → COMPLETE (45/45, contracts only)
   ↓
 P13 Agent Runtime Contract → COMPLETE (contracts only; 28/28 tests, 11/11 verifier checks)
   ↓
-P14 Tool + Skill Contract → IN PROGRESS (contracts + schemas validated locally; remote CI pending)
+P14 Tool + Skill Contract → COMPLETE (contracts only; 40/40 tests, 17/17 verifier checks, remote CI green)
   ↓
 P15 Memory/State/Event → P16 Verification/Eval → P17 MCP
   ↓
@@ -380,7 +380,7 @@ linex.os/
 └── .gitignore                  # Excludes .env, secrets, logs, build artifacts, OS junk
 ```
 
-**Historical phase note:** P5 was followed by P6 (`AGENTS.md`, `ARENA.md`, and `docs/agent-contract.md`). The current ledger is `docs/architecture/roadmap.md`: P13 Agent Runtime Contract is complete as a contract-only phase; P14 Tool + Skill Contract is in progress as a contract-only phase and is NOT complete until the validator adoption, full JSON Schema validation, the verifier, and a green remote CI run have all been recorded.
+**Historical phase note:** P5 was followed by P6 (`AGENTS.md`, `ARENA.md`, and `docs/agent-contract.md`). The current ledger is `docs/architecture/roadmap.md`: P13 Agent Runtime Contract and P14 Tool + Skill Contract are complete as contract-only phases; P15 Memory/State/Event Contracts is next.
 
 ---
 
@@ -431,6 +431,6 @@ linex.os/
 
 ---
 
-**Current status:** P14 Tool + Skill Contract — IN PROGRESS, contracts only (40/40 local contract checks including JSON Schema draft 2020-12 meta-schema validation and valid/invalid fixtures; verifier 17/17 PASS locally). The remaining gate is a green remote CI run, see ADR 0013. P13 Agent Runtime Contract remains COMPLETE as documentation and contract checks only (28/28 local tests; 11/11 verifier checks). The P3 `pkg-config` and P4 PowerShell network blockers remain environment-dependent; neither P13 nor P14 implements a runtime.
+**Current status:** P14 Tool + Skill Contract — COMPLETE as documentation, schemas, and contract checks only (40/40 local contract checks including JSON Schema draft 2020-12 meta-schema validation with 8/8 valid and 33/33 invalid fixtures; verifier 17/17 PASS; remote CI green on run 37350172963 and run 37350152975). P13 Agent Runtime Contract remains COMPLETE (28/28 tests, 11/11 verifier checks). The P3 `pkg-config` and P4 PowerShell network blockers remain environment-dependent; neither P13 nor P14 implements a runtime.
 
-**Next:** confirm the P14 suite and verifier on the remote CI runner (Job 5/Job 6), then record P14 as complete in the roadmap. Technology selection remains reserved for P18; no product runtime or implementation language has been chosen.
+**Next:** P15 Memory / State / Event Contracts (contracts only). Technology selection remains reserved for P18; no product runtime or implementation language has been chosen. Technology selection remains reserved for P18; no product runtime or implementation language has been chosen.

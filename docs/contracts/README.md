@@ -161,10 +161,10 @@ No cycles, no UI→sudo, no LLM→shell, no Agent→prod DB direct, no MCP→unr
 
 P9's immediate next phase was P10 Execution Authority Contracts, which are now recorded in
 `execution-authority.md` and ADR 0008. P11 Policy Engine and P12 Capability Registry followed.
-P13 Agent Runtime followed (accepted by ADR 0012). The current contract phase is P14 Tool + Skill
-Contract, which is IN PROGRESS and contracts-only: its contracts, schemas, fixtures, vectors,
-tests, and verifier are authored, JSON Schema validation passes locally with the approved
-hash-pinned validator, and the remaining gate is the corresponding remote CI run per `docs/architecture/roadmap.md` and ADR 0013.
+P13 Agent Runtime followed (accepted by ADR 0012) and is complete. P14 Tool + Skill Contract is
+also complete as a contracts-only phase: contracts, schemas, fixtures, vectors, tests, and
+verifier are authored, JSON Schema validation passes locally and in CI with the approved
+hash-pinned validator, and the remote CI runs are green. P15 Memory/State/Event Contracts is next per `docs/architecture/roadmap.md` and ADR 0013.
 
 ## References
 
@@ -204,7 +204,7 @@ The vectors and checks verify contract presence and consistency only; they do no
 Agent Runtime, prove immutable deployed storage, or constitute production verification. P14
 Tool + Skill Contract is next; technology selection remains reserved for P18.
 
-## P14 — Tool + Skill Contract (IN PROGRESS; contracts only, not COMPLETE)
+## P14 — Tool + Skill Contract (COMPLETE; contracts only, no implementation)
 
 P14 specifies a versioned, immutable **Tool** declaration bound to exactly one P10 executor
 authority, and a **Skill** as an ordered, linear composition of pinned Tools. It consumes P9
@@ -236,4 +236,5 @@ P14 deliverables:
 
 The vectors and checks verify contract presence, schema validity, and the documented invariants.
 They do not implement or simulate a Tool or Skill runtime, do not prove an execution sandbox or
-production behaviour, and are not production verification.
+production behaviour, and are not production verification. P14 remains COMPLETE only in the
+contract sense: nothing in this phase is implemented, deployed, or production-verified.
